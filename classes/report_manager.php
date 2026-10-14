@@ -54,7 +54,7 @@ final class report_manager {
             foreach ($rs as $course) {
                 $DB->insert_record('local_filexray_course', (object) [
                     'reportid' => $id, 'courseid' => $course->id,
-                    'coursename' => $course->fullname, 'status' => 'pending',
+                    'coursename' => self::plain_course_name($course), 'status' => 'pending',
                     'filecount' => 0, 'timestarted' => 0,
                     'timefinished' => 0, 'errormessage' => null,
                 ], false);
@@ -73,6 +73,22 @@ final class report_manager {
             runner::enqueue($id);
         }
         return $id;
+    }
+
+    /**
+     * Resolve multilang course names and remove any HTML before storing the report snapshot.
+     *
+     * @param \stdClass $course Course record with id and fullname.
+     * @return string Plain-text course name.
+     */
+    private static function plain_course_name(\stdClass $course): string {
+        $formatted = format_string($course->fullname, true, [
+            'context' => \context_course::instance($course->id),
+        ]);
+        // Decode entities before stripping so encoded markup cannot survive.
+        $plain = strip_tags(html_entity_decode($formatted, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        $normalised = preg_replace('/\\s+/u', ' ', $plain);
+        return trim($normalised ?? $plain);
     }
 
     /**

@@ -25,7 +25,7 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="reportid" TYPE="int" LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
-        <FIELD NAME="coursename" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="coursename" TYPE="text" NOTNULL="true"/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending"/>
         <FIELD NAME="filecount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timestarted" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
