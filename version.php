@@ -28,4 +28,4 @@ $plugin->release = '1.0.6';
 $plugin->version = 2026101406;
 $plugin->component = 'local_filexray';
 $plugin->requires = 2024100700;
-$plugin->maturity = MATURITY_BETA;
+$plugin->maturity = MATURITY_STABLE;
