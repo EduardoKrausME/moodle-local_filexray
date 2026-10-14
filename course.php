@@ -59,6 +59,8 @@ foreach ($rows as $row) {
     $files[] = [
         'fileid' => $row->fileid, 'filename' => $row->filename,
         'component' => $row->component, 'filearea' => $row->filearea,
+        'componentname' => \local_filexray\file_area_guide::component_name($row->component),
+        'docurl' => \local_filexray\file_area_guide::documentation_url($row->component, $row->filearea),
         'contextid' => $row->contextid, 'size' => display_size($row->filesize),
         'previewurl' => $url->out(false),
         'canpreview' => $kind !== 'download',

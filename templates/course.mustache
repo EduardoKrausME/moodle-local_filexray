@@ -3,28 +3,33 @@
     <p>{{#str}}matchedfiles, local_filexray{{/str}} {{filecount}}</p>
     <table class="generaltable table">
         <thead><tr>
-            <th scope="col">{{#str}}fileid, local_filexray{{/str}}</th>
             <th scope="col">{{#str}}filename, local_filexray{{/str}}</th>
-            <th scope="col">{{#str}}component, local_filexray{{/str}}</th>
-            <th scope="col">{{#str}}filearea, local_filexray{{/str}}</th>
-            <th scope="col">Context ID</th>
+            <th scope="col">{{#str}}component, local_filexray{{/str}} / {{#str}}filearea, local_filexray{{/str}}</th>
             <th scope="col">{{#str}}filesize, local_filexray{{/str}}</th>
-            <th scope="col">{{#str}}preview, local_filexray{{/str}}</th>
         </tr></thead>
         <tbody>{{#files}}<tr>
-            <td>{{fileid}}</td>
-            <td>{{filename}}</td>
-            <td>{{component}}</td>
-            <td>{{filearea}}</td>
-            <td>{{contextid}}</td>
-            <td>{{size}}</td>
             <td>
-                {{#canpreview}}<a class="btn btn-sm btn-outline-primary" href="{{{previewurl}}}"
-                    target="_blank" rel="noopener noreferrer">
-                    {{#str}}preview, local_filexray{{/str}}</a>{{/canpreview}}
-                {{#candownload}}<a class="btn btn-sm btn-outline-secondary" href="{{{previewurl}}}">
-                    {{#str}}downloadfile, local_filexray{{/str}}</a>{{/candownload}}
+                {{filename}}
+                {{#canpreview}}
+                    <a href="{{{previewurl}}}" target="_blank" rel="noopener noreferrer"
+                        title="{{#str}}preview, local_filexray{{/str}}"
+                        aria-label="{{#str}}preview, local_filexray{{/str}} {{filename}}">↗</a>
+                {{/canpreview}}
+                {{#candownload}}
+                    <a href="{{{previewurl}}}" title="{{#str}}downloadfile, local_filexray{{/str}}"
+                        aria-label="{{#str}}downloadfile, local_filexray{{/str}} {{filename}}">↗</a>
+                {{/candownload}}
             </td>
+            <td>
+                <code title="{{component}}">{{componentname}} / {{filearea}}</code>
+                {{#docurl}}
+                    <br>
+                    <a href="{{{docurl}}}" target="_blank" rel="noopener noreferrer">
+                        {{#str}}areadoclink, local_filexray{{/str}} ↗
+                    </a>
+                {{/docurl}}
+            </td>
+            <td>{{size}}</td>
         </tr>{{/files}}</tbody>
     </table>
     <div class="d-flex gap-2">
