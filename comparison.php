@@ -84,8 +84,8 @@ $guides = [
 foreach ($areas as &$area) {
     $key = $area['component'] . '/' . ($area['iscomponent'] ? '*' : $area['filearea']);
     $guide = $guides[$key] ?? 'areas';
-    $area['docurl'] = (new moodle_url('/local/filexray/docs/' . $doclanguage .
-        '/recursos/' . $guide . '.html'))->out(false);
+    $area['docurl'] = 'https://eduardokrausme.github.io/moodle-local_filexray/' .
+        $doclanguage . '/recursos/' . $guide . '.html';
 }
 unset($area);
 
