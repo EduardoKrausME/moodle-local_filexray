@@ -98,15 +98,26 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
 
         var render = function(data) {
             total = data.total;
-            text('summary', (data.completed + data.failed) + ' / ' + data.total);
-            text('percent', data.percent + '%');
+            // Remove progress-only elements at 100%, keeping course totals and table.
+            var progress = wrapper.querySelector('[data-region="progress"]');
+            if (data.percent >= 100) {
+                var status = wrapper.querySelector('[role="status"]');
+                if (status) {
+                    status.remove();
+                }
+                if (progress) {
+                    progress.remove();
+                }
+            } else if (progress) {
+                text('summary', (data.completed + data.failed) + ' / ' + data.total);
+                text('percent', data.percent + '%');
+                progress.value = data.percent;
+            }
             text('completed', data.completed);
             text('failed', data.failed);
             text('files', data.filecount);
             text('range', data.total ? (offset + 1) + ' - ' +
                 Math.min(offset + data.courses.length, data.total) + ' / ' + data.total : '0 / 0');
-            var progress = wrapper.querySelector('[data-region="progress"]');
-            progress.value = data.percent;
             previous.disabled = offset === 0;
             next.disabled = offset + limit >= total;
             tbody.replaceChildren();
@@ -170,9 +181,8 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
             resume.addEventListener('click', function() {
                 resume.disabled = true;
                 invoke('resume_report', {reportid: reportid}).then(function() {
-                    resume.disabled = false;
-                    active = true;
-                    requestNow();
+                    // A new attempt restores progress markup after it was removed at 100%.
+                    window.location.reload();
                 }).catch(function(error) {
                     resume.disabled = false;
                     Notification.exception(error);

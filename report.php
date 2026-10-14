@@ -39,6 +39,7 @@ $PAGE->requires->js_call_amd('local_filexray/reports', 'initReport', [$id]);
 $data = [
     'id' => $id,
     'total' => $report->totalcourses,
+    'progresscomplete' => in_array($report->status, ['completed', 'partial'], true),
     'canresume' => has_capability('local/filexray:run', $context),
     'comparisonurl' => (new moodle_url('/local/filexray/comparison.php', ['id' => $id]))->out(false),
     'coursebaseurl' => (new moodle_url('/local/filexray/course.php'))->out(false),
