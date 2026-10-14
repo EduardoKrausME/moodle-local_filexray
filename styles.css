@@ -1,0 +1,51 @@
+/*
+ * File X-Ray report summary cards.
+ *
+ * @package    local_filexray
+ * @copyright  2026 Eduardo Kraus
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+.local-filexray-comparison .filexray-metric {
+    --filexray-metric-accent: #386cba;
+    border: 1px solid rgba(65, 85, 120, .16);
+    border-top: 4px solid var(--filexray-metric-accent);
+    border-radius: .8rem;
+    box-shadow: 0 6px 20px rgba(23, 43, 77, .07);
+}
+
+.local-filexray-comparison .filexray-metric--matched {
+    --filexray-metric-accent: #17865e;
+}
+
+.local-filexray-comparison .filexray-metric--outside {
+    --filexray-metric-accent: #8561b0;
+}
+
+.local-filexray-comparison .filexray-metric--courses {
+    --filexray-metric-accent: #267d99;
+}
+
+.local-filexray-comparison .filexray-metric .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.local-filexray-comparison .filexray-metric-label {
+    font-size: .875rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--bs-secondary-color, #596579);
+}
+
+.local-filexray-comparison .filexray-metric-value {
+    font-size: clamp(1.7rem, 2.5vw, 2.25rem);
+    font-weight: 750;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: inherit;
+    overflow-wrap: anywhere;
+}

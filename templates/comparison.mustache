@@ -5,12 +5,42 @@
         </div>
     {{/provisional}}
     <p>{{#str}}comparison_note, local_filexray{{/str}}</p>
-    <p><strong>{{#str}}totaldatabase, local_filexray{{/str}}</strong> {{total}}</p>
-    <p><strong>{{#str}}matched, local_filexray{{/str}}</strong> {{matched}}</p>
-    <p><strong>{{#str}}unmatchedcount, local_filexray{{/str}}</strong> {{unmatched}}</p>
+    <div class="row filexray-stats mt-4 mb-3">
+        <div class="col-12 col-sm-6 col-xl-3 mb-3">
+            <div class="card filexray-metric filexray-metric--total h-100">
+                <div class="card-body">
+                    <div class="filexray-metric-label">{{#str}}totaldatabase, local_filexray{{/str}}</div>
+                    <div class="filexray-metric-value">{{total}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3 mb-3">
+            <div class="card filexray-metric filexray-metric--matched h-100">
+                <div class="card-body">
+                    <div class="filexray-metric-label">{{#str}}matched, local_filexray{{/str}}</div>
+                    <div class="filexray-metric-value">{{matched}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3 mb-3">
+            <div class="card filexray-metric filexray-metric--outside h-100">
+                <div class="card-body">
+                    <div class="filexray-metric-label">{{#str}}unmatchedcount, local_filexray{{/str}}</div>
+                    <div class="filexray-metric-value">{{unmatched}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3 mb-3">
+            <div class="card filexray-metric filexray-metric--courses h-100">
+                <div class="card-body">
+                    <div class="filexray-metric-label">{{#str}}coursecount, local_filexray{{/str}}</div>
+                    <div class="filexray-metric-value">{{coursecount}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <h3>{{#str}}coursesummary, local_filexray{{/str}}</h3>
     <p>{{#str}}coursesummary_note, local_filexray{{/str}}</p>
-    <p><strong>{{#str}}coursecount, local_filexray{{/str}}</strong> {{coursecount}}</p>
     <table class="generaltable table">
         <thead>
             <tr>
