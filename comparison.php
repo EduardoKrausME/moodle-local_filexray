@@ -38,11 +38,16 @@ $PAGE->set_title(get_string('comparison', 'local_filexray'));
 $PAGE->set_heading(get_string('comparison', 'local_filexray'));
 
 $params = ['reportid' => $id, 'dir' => '.'];
+// Use the same classification as the other-area summary, so a file ID
+// grouped there does not also appear in the residual unmatched listing.
+[$classifiedsql, $classifiedparams] = \local_filexray\comparison_summary::classified_condition('f');
+$params = array_merge($params, $classifiedparams);
 $where = "f.filename <> :dir
           AND NOT EXISTS (
               SELECT 1 FROM {local_filexray_file} fx
                WHERE fx.reportid = :reportid AND fx.fileid = f.id
-          )";
+          )
+          AND NOT " . $classifiedsql;
 $total = (int) $DB->count_records_select('files', "filename <> :dir", ['dir' => '.']);
 $matched = (int) $DB->count_records_sql(
     "SELECT COUNT(DISTINCT fileid) FROM {local_filexray_file}

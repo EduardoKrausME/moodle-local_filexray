@@ -75,8 +75,30 @@ final class comparison_summary {
     }
 
     /**
-     * Group current mdl_files records by component and filearea. Selected
-     * components also receive a single roll-up across all their file areas.
+     * Return a cross-database filter for files grouped as other areas.
+     *
+     * Apply the SAME filter to the area summary and to residual unmatched
+     * files so one file record cannot appear in both tables.
+     *
+     * @param string $alias Table alias for mdl_files.
+     * @return array SQL condition and named parameters.
+     */
+    public static function classified_condition(string $alias): array {
+        global $DB;
+
+        $condition = "({$alias}.component IN (:otheruser, :otherbadges, :otherbackup, :otherh5p)
+             OR " . $DB->sql_substr($alias . '.component', 1, 6) . ' = :othertheme)';
+        return [$condition, [
+            'otheruser' => 'user',
+            'otherbadges' => 'badges',
+            'otherbackup' => 'backup',
+            'otherh5p' => 'core_h5p',
+            'othertheme' => 'theme_',
+        ]];
+    }
+
+    /**
+     * Summarize non-course component areas and show one line for H5P and themes.
      *
      * @param int $reportid File X-Ray report ID.
      * @return array
@@ -84,10 +106,9 @@ final class comparison_summary {
     public static function fileareas(int $reportid): array {
         global $DB;
 
-        // Distinct file IDs prevent joining the same mdl_files row several
-        // times when it belongs to backups from more than one course.
-        // SUM(filesize) includes directory records (normally zero bytes),
-        // matching an unfiltered SUM(filesize) for each selected component.
+        [$condition, $classificationparams] = self::classified_condition('f');
+        // Distinct file IDs avoid joining one Moodle file multiple times
+        // when more than one course backup inventories the same file.
         $sql = "SELECT f.component, f.filearea,
                        SUM(CASE WHEN f.filename <> :directory THEN 1 ELSE 0 END) AS allcount,
                        COALESCE(SUM(f.filesize), 0) AS allbytes,
@@ -101,10 +122,11 @@ final class comparison_summary {
                        FROM {local_filexray_file}
                       WHERE reportid = :reportid
                        ) selected ON selected.fileid = f.id
+                 WHERE " . $condition . "
               GROUP BY f.component, f.filearea";
 
-        // Explicit rows show the exact scopes requested by the administrator.
-        // A component/* row is an overlapping total, never an additional category.
+        // Explicitly described categories are followed by any remaining
+        // user or badge areas with files outside this course inventory.
         $labels = [
             'user/draft' => ['areadraft', 'areadraft_desc'],
             'user/backup' => ['areauserbackup', 'areauserbackup_desc'],
@@ -112,71 +134,99 @@ final class comparison_summary {
             'badges/badgeimage' => ['areabadgeimage', 'areabadgeimage_desc'],
             'backup/*' => ['areabackup', 'areabackup_desc'],
             'core_h5p/*' => ['areacoreh5p', 'areacoreh5p_desc'],
+            'theme_*/*' => ['areathemes', 'areathemes_desc'],
             'user/private' => ['areaprivate', 'areaprivate_desc'],
             'user/profile' => ['areaprofile', 'areaprofile_desc'],
         ];
-        $order = array_keys($labels);
-        $componenttotals = [
-            'backup' => ['allcount' => 0, 'allbytes' => 0, 'outsidecount' => 0, 'outsidebytes' => 0],
-            'core_h5p' => ['allcount' => 0, 'allbytes' => 0, 'outsidecount' => 0, 'outsidebytes' => 0],
+        $priority = array_keys($labels);
+        $totals = [
+            'backup' => ['files' => 0, 'bytes' => 0, 'outsidefiles' => 0, 'outsidebytes' => 0, 'areas' => []],
+            'core_h5p' => ['files' => 0, 'bytes' => 0, 'outsidefiles' => 0, 'outsidebytes' => 0, 'areas' => []],
+            'theme_*' => ['files' => 0, 'bytes' => 0, 'outsidefiles' => 0, 'outsidebytes' => 0, 'areas' => []],
         ];
+
         $rows = [];
-        $rs = $DB->get_recordset_sql($sql, [
+        $params = array_merge($classificationparams, [
             'directory' => '.',
             'outside_directory' => '.',
             'reportid' => $reportid,
         ]);
+        $rs = $DB->get_recordset_sql($sql, $params);
         try {
             foreach ($rs as $record) {
-                $key = $record->component . '/' . $record->filearea;
+                $component = $record->component;
+                $filearea = $record->filearea;
                 $count = (int) $record->allcount;
                 $bytes = (int) $record->allbytes;
                 $outsidecount = (int) $record->outsidecount;
                 $outsidebytes = (int) $record->outsidebytes;
+                $key = $component . '/' . $filearea;
 
-                // Accumulate ALL subareas, including those that appear in course backups.
-                if (array_key_exists($record->component, $componenttotals)) {
-                    $componenttotals[$record->component]['allcount'] += $count;
-                    $componenttotals[$record->component]['allbytes'] += $bytes;
-                    $componenttotals[$record->component]['outsidecount'] += $outsidecount;
-                    $componenttotals[$record->component]['outsidebytes'] += $outsidebytes;
+                $group = null;
+                if ($component === 'backup' || $component === 'core_h5p') {
+                    $group = $component;
+                } else if (strpos($component, 'theme_') === 0) {
+                    $group = 'theme_*';
+                }
+                if ($group !== null) {
+                    $totals[$group]['files'] += $count;
+                    $totals[$group]['bytes'] += $bytes;
+                    $totals[$group]['outsidefiles'] += $outsidecount;
+                    $totals[$group]['outsidebytes'] += $outsidebytes;
+                    if ($count > 0) {
+                        $totals[$group]['areas'][$filearea] = true;
+                    }
                 }
 
-                // A group with no actual files must not appear, even if it
-                // has directory metadata or a preferred category label.
+                // core_h5p and every theme_* component appear only in their
+                // consolidated row, never as duplicate per-area entries.
+                if ($component === 'core_h5p' || $group === 'theme_*') {
+                    continue;
+                }
                 if ($count === 0 || ($outsidecount === 0 && !isset($labels[$key]))) {
                     continue;
                 }
                 $rows[$key] = self::area_row(
-                    $record->component,
-                    $record->filearea,
+                    $component,
+                    $filearea,
                     $count,
                     $bytes,
                     $outsidecount,
                     $outsidebytes,
                     $labels[$key] ?? null,
-                    isset($labels[$key]) ? (int) array_search($key, $order, true) : 100
+                    isset($labels[$key]) ? (int) array_search($key, $priority, true) : 100
                 );
             }
         } finally {
             $rs->close();
         }
 
-        // Component-only totals correspond to WHERE component = 'backup' or 'core_h5p'.
-        foreach ($componenttotals as $component => $totals) {
-            if ($totals['allcount'] === 0) {
+        // All backup areas remain a roll-up as before. Core H5P shows every
+        // existing filearea, whereas themes show at most five and "etc...".
+        foreach ($totals as $component => $aggregate) {
+            if ($aggregate['files'] === 0) {
                 continue;
             }
             $key = $component . '/*';
+            $areas = array_keys($aggregate['areas']);
+            sort($areas, SORT_STRING);
+            if ($component === 'theme_*' && count($areas) > 5) {
+                $displayareas = implode(' / ', array_slice($areas, 0, 5)) . ' / etc...';
+            } else if ($component === 'backup') {
+                $displayareas = '*';
+            } else {
+                $displayareas = implode(' / ', $areas);
+            }
             $rows[$key] = self::area_row(
                 $component,
-                '*',
-                $totals['allcount'],
-                $totals['allbytes'],
-                $totals['outsidecount'],
-                $totals['outsidebytes'],
+                $displayareas,
+                $aggregate['files'],
+                $aggregate['bytes'],
+                $aggregate['outsidefiles'],
+                $aggregate['outsidebytes'],
                 $labels[$key],
-                (int) array_search($key, $order, true)
+                (int) array_search($key, $priority, true),
+                true
             );
         }
 
@@ -194,16 +244,17 @@ final class comparison_summary {
     }
 
     /**
-     * Prepare the presentation of a single file area or component-wide total.
+     * Prepare an individual file-area or component summary row.
      *
-     * @param string $component File component.
-     * @param string $filearea File area or * for all.
-     * @param int $count Total non-directory files.
-     * @param int $bytes Total logical bytes.
-     * @param int $outsidecount Non-directory files outside the backup inventory.
-     * @param int $outsidebytes Logical bytes outside the inventory.
-     * @param array|null $labelids Optional category title and explanation string keys.
+     * @param string $component Moodle component.
+     * @param string $filearea Stored area or summary of areas.
+     * @param int $count File count.
+     * @param int $bytes Logical bytes.
+     * @param int $outsidecount Unreferenced-by-inventory file records.
+     * @param int $outsidebytes Logical bytes outside the course inventory.
+     * @param array|null $labelids Optional label and explanation keys.
      * @param int $priority Sort priority.
+     * @param bool $iscomponent Whether row totals a component or group.
      * @return array
      */
     private static function area_row(
@@ -214,7 +265,8 @@ final class comparison_summary {
         int $outsidecount,
         int $outsidebytes,
         ?array $labelids,
-        int $priority
+        int $priority,
+        bool $iscomponent = false
     ): array {
         return [
             'name' => $labelids ? get_string($labelids[0], 'local_filexray')
@@ -223,7 +275,7 @@ final class comparison_summary {
                 : get_string('areaother_desc', 'local_filexray'),
             'component' => $component,
             'filearea' => $filearea,
-            'iscomponent' => $filearea === '*',
+            'iscomponent' => $iscomponent || $filearea === '*',
             'allcount' => $count,
             'allbytes' => $bytes,
             'allsize' => display_size($bytes),

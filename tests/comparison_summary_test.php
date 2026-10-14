@@ -189,7 +189,9 @@ final class comparison_summary_test extends \advanced_testcase {
 
         $rows = [];
         foreach (comparison_summary::fileareas($reportid) as $area) {
-            $rows[$area['component'] . '/' . $area['filearea']] = $area;
+            // Consolidated components have a display area list, not the literal '*' key.
+            $key = $area['component'] . '/' . ($area['iscomponent'] ? '*' : $area['filearea']);
+            $rows[$key] = $area;
         }
         $filters = [
             'user/draft' => ['component' => 'user', 'filearea' => 'draft'],
@@ -223,6 +225,114 @@ final class comparison_summary_test extends \advanced_testcase {
             $rows['backup/course']['allbytes'] + $rows['backup/automated']['allbytes'],
             $rows['backup/*']['allbytes']
         );
+    }
+
+    /**
+     * H5P has one consolidated row and all themes share a single row with
+     * up to five area names, without losing any logical file bytes.
+     */
+    public function test_h5p_and_themes_are_consolidated(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $storage = get_file_storage();
+        $systemcontext = \context_system::instance()->id;
+        $fileareas = ['javascript', 'css', 'icons', 'images', 'content', 'fonts'];
+        $themebytes = 0;
+        foreach ($fileareas as $i => $filearea) {
+            $data = str_repeat('t', $i + 10);
+            $themebytes += strlen($data);
+            $storage->create_file_from_string([
+                'contextid' => $systemcontext,
+                'component' => ($i % 2 === 0) ? 'theme_learnlingo' : 'theme_degrade',
+                'filearea' => $filearea,
+                'itemid' => $i + 1,
+                'filepath' => '/',
+                'filename' => 'theme-test-' . $i . '.css',
+            ], $data);
+        }
+        foreach (['libraries', 'export', 'content'] as $i => $area) {
+            $storage->create_file_from_string([
+                'contextid' => $systemcontext,
+                'component' => 'core_h5p',
+                'filearea' => $area,
+                'itemid' => $i + 10,
+                'filepath' => '/',
+                'filename' => 'h5p-test-' . $i . '.h5p',
+            ], str_repeat('h', $i + 2));
+        }
+
+        $reportid = report_manager::create((int) get_admin()->id);
+        $areas = comparison_summary::fileareas($reportid);
+        $themes = [];
+        $h5ps = [];
+        foreach ($areas as $row) {
+            if ($row['component'] === 'theme_*') {
+                $themes[] = $row;
+            }
+            if ($row['component'] === 'core_h5p') {
+                $h5ps[] = $row;
+            }
+            $this->assertNotSame('theme_learnlingo', $row['component']);
+            $this->assertNotSame('theme_degrade', $row['component']);
+        }
+        $this->assertCount(1, $themes);
+        $this->assertCount(1, $h5ps);
+        $this->assertTrue($themes[0]['iscomponent']);
+        $this->assertTrue($h5ps[0]['iscomponent']);
+        $this->assertSame($themebytes, $themes[0]['allbytes']);
+        $this->assertCount(5, array_filter(explode(' / ', $themes[0]['filearea']),
+            static function(string $area): bool {
+                return $area !== 'etc...';
+            }));
+        $this->assertStringEndsWith(' / etc...', $themes[0]['filearea']);
+        foreach (['libraries', 'export', 'content'] as $area) {
+            $this->assertStringContainsString($area, $h5ps[0]['filearea']);
+        }
+    }
+
+    /**
+     * The same SQL classification used by both tables leaves unrelated
+     * course files in the residual unmatched listing.
+     */
+    public function test_other_areas_do_not_reappear_in_residual_listing(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $storage = get_file_storage();
+        $context = \context_system::instance()->id;
+        $files = [];
+        foreach (['user', 'core_h5p', 'theme_learnlingo', 'mod_resource'] as $i => $component) {
+            $area = $component === 'user' ? 'draft' : 'content';
+            $files[$component] = $storage->create_file_from_string([
+                'contextid' => $context,
+                'component' => $component,
+                'filearea' => $area,
+                'itemid' => 80 + $i,
+                'filepath' => '/',
+                'filename' => 'classification-' . $i . '.txt',
+            ], str_repeat('x', 15 + $i));
+        }
+        $reportid = report_manager::create((int) get_admin()->id);
+        [$classifiedsql, $classifiedparams] = comparison_summary::classified_condition('f');
+        foreach ($files as $component => $file) {
+            $params = array_merge($classifiedparams, [
+                'fileid' => $file->get_id(),
+                'reportid' => $reportid,
+            ]);
+            $sql = "SELECT COUNT(*)
+                      FROM {files} f
+                     WHERE f.id = :fileid
+                       AND NOT EXISTS (
+                           SELECT 1 FROM {local_filexray_file} fx
+                            WHERE fx.reportid = :reportid AND fx.fileid = f.id
+                       )
+                       AND NOT " . $classifiedsql;
+            $count = (int) $DB->count_records_sql($sql, $params);
+            $this->assertSame($component === 'mod_resource' ? 1 : 0, $count, $component);
+        }
     }
 
 }
