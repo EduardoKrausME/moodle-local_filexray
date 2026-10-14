@@ -30,7 +30,7 @@ if ($hassiteconfig) {
         'local_filexray/maxreports',
         get_string('maxreports', 'local_filexray'),
         get_string('maxreports_desc', 'local_filexray'),
-        10,
+        5,
         PARAM_INT
     ));
     $ADMIN->add('localplugins', $settings);
