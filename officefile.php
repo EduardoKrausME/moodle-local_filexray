@@ -32,6 +32,10 @@ $expires = required_param('expires', PARAM_INT);
 $nonce = required_param('nonce', PARAM_ALPHANUMEXT);
 $signature = required_param('sig', PARAM_ALPHANUMEXT);
 
+require_login();
+$context = context_system::instance();
+require_capability('local/filexray:view', $context);
+
 // This route intentionally has no Moodle login. Access is granted only by a
 // short-lived HMAC created after an administrator has confirmed disclosure.
 try {
