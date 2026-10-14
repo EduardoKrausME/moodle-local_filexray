@@ -71,7 +71,9 @@ final class backup_inventory {
 
             // The native plugins will select files in their backup tasks. We do not
             // scan course contexts with ad-hoc SQL to guess file ownership.
-            $controller->save_controller();
+            // set_status() persists the controller and reopens file loggers after
+            // serialisation. An explicit save_controller() beforehand would close
+            // file_logger::$fhandle and break the very next backup log write.
             $controller->set_status(backup::STATUS_EXECUTING);
             $foundfinal = false;
             foreach ($plan->get_tasks() as $task) {

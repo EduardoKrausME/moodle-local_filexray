@@ -53,7 +53,9 @@ final class resume_report extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/filexray:run', $context);
-        \local_filexray\report_manager::get((int) $args['reportid']);
+        // Failed rows are terminal until an administrator requests a retry.
+        // Preserve the report ID, so the existing progress page can continue.
+        \local_filexray\report_manager::retry_failed((int) $args['reportid']);
         \local_filexray\runner::enqueue((int) $args['reportid']);
         return ['success' => true];
     }

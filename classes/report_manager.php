@@ -92,6 +92,39 @@ final class report_manager {
     }
 
     /**
+     * Requeue previously failed courses, but only when explicitly requested.
+     *
+     * A failure is otherwise terminal to prevent an infinite retry loop.
+     *
+     * @param int $reportid Report ID.
+     * @return int Number of courses queued for retry.
+     */
+    public static function retry_failed(int $reportid): int {
+        global $DB;
+
+        self::get($reportid);
+        $failed = $DB->get_records('local_filexray_course', [
+            'reportid' => $reportid,
+            'status' => 'failed',
+        ], 'id ASC', 'id');
+        foreach ($failed as $row) {
+            $DB->delete_records('local_filexray_file', ['reportcourseid' => $row->id]);
+            $DB->update_record('local_filexray_course', (object) [
+                'id' => $row->id,
+                'status' => 'pending',
+                'filecount' => 0,
+                'timestarted' => 0,
+                'timefinished' => 0,
+                'errormessage' => null,
+            ]);
+        }
+        if ($failed) {
+            self::refresh($reportid);
+        }
+        return count($failed);
+    }
+
+    /**
      * @param int $reportid Report ID.
      * @return \stdClass
      */

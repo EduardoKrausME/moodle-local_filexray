@@ -53,4 +53,27 @@ final class report_manager_test extends \advanced_testcase {
         $this->assertStringNotContainsString('>', $snapshot->coursename);
         $this->assertNotSame($fullname, $snapshot->coursename);
     }
+    /**
+     * The explicit resume action must permit retrying failed jobs in the same report.
+     */
+    public function test_retry_failed_course(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $course = $this->getDataGenerator()->create_course();
+        $reportid = report_manager::create((int) get_admin()->id);
+        $row = $DB->get_record('local_filexray_course', [
+            'reportid' => $reportid, 'courseid' => $course->id,
+        ], '*', MUST_EXIST);
+        $DB->update_record('local_filexray_course', (object) [
+            'id' => $row->id, 'status' => 'failed', 'errormessage' => 'error/error_writing_file',
+        ]);
+
+        $this->assertSame(1, report_manager::retry_failed($reportid));
+        $updated = $DB->get_record('local_filexray_course', ['id' => $row->id], '*', MUST_EXIST);
+        $this->assertSame('pending', $updated->status);
+        $this->assertEmpty($updated->errormessage);
+        $this->assertSame(0, report_manager::retry_failed($reportid));
+    }
 }
