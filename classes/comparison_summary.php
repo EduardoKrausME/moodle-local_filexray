@@ -75,82 +75,116 @@ final class comparison_summary {
     }
 
     /**
-     * Display totals per file area, distinguishing global records from those
-     * not referenced by this report's inventory.
+     * Group current mdl_files records by component and filearea. Selected
+     * components also receive a single roll-up across all their file areas.
      *
-     * @param int $reportid Report ID.
+     * @param int $reportid File X-Ray report ID.
      * @return array
      */
     public static function fileareas(int $reportid): array {
         global $DB;
 
-        // Distinct IDs prevent duplication when multiple courses refer to a file.
+        // Distinct file IDs prevent joining the same mdl_files row several
+        // times when it belongs to backups from more than one course.
+        // SUM(filesize) includes directory records (normally zero bytes),
+        // matching an unfiltered SUM(filesize) for each selected component.
         $sql = "SELECT f.component, f.filearea,
-                       COUNT(*) AS allcount,
+                       SUM(CASE WHEN f.filename <> :directory THEN 1 ELSE 0 END) AS allcount,
                        COALESCE(SUM(f.filesize), 0) AS allbytes,
-                       SUM(CASE WHEN selected.fileid IS NULL THEN 1 ELSE 0 END) AS outsidecount,
-                       COALESCE(SUM(CASE WHEN selected.fileid IS NULL THEN f.filesize ELSE 0 END), 0) AS outsidebytes
+                       SUM(CASE WHEN selected.fileid IS NULL AND f.filename <> :outside_directory
+                                THEN 1 ELSE 0 END) AS outsidecount,
+                       COALESCE(SUM(CASE WHEN selected.fileid IS NULL
+                                    THEN f.filesize ELSE 0 END), 0) AS outsidebytes
                   FROM {files} f
              LEFT JOIN (
-                     SELECT DISTINCT fileid FROM {local_filexray_file}
+                     SELECT DISTINCT fileid
+                       FROM {local_filexray_file}
                       WHERE reportid = :reportid
                        ) selected ON selected.fileid = f.id
-                 WHERE f.filename <> :directory
               GROUP BY f.component, f.filearea";
+
+        // Explicit rows show the exact scopes requested by the administrator.
+        // A component/* row is an overlapping total, never an additional category.
         $labels = [
-            'user/draft' => 'areadraft',
-            'user/icon' => 'areaavatar',
-            'user/private' => 'areaprivate',
-            'user/profile' => 'areaprofile',
+            'user/draft' => ['areadraft', 'areadraft_desc'],
+            'user/backup' => ['areauserbackup', 'areauserbackup_desc'],
+            'user/icon' => ['areaavatar', 'areaavatar_desc'],
+            'badges/badgeimage' => ['areabadgeimage', 'areabadgeimage_desc'],
+            'backup/*' => ['areabackup', 'areabackup_desc'],
+            'core_h5p/*' => ['areacoreh5p', 'areacoreh5p_desc'],
+            'user/private' => ['areaprivate', 'areaprivate_desc'],
+            'user/profile' => ['areaprofile', 'areaprofile_desc'],
         ];
-        $priority = array_keys($labels);
+        $order = array_keys($labels);
+        $componenttotals = [
+            'backup' => ['allcount' => 0, 'allbytes' => 0, 'outsidecount' => 0, 'outsidebytes' => 0],
+            'core_h5p' => ['allcount' => 0, 'allbytes' => 0, 'outsidecount' => 0, 'outsidebytes' => 0],
+        ];
         $rows = [];
-        $recordset = $DB->get_recordset_sql($sql, ['reportid' => $reportid, 'directory' => '.']);
+        $rs = $DB->get_recordset_sql($sql, [
+            'directory' => '.',
+            'outside_directory' => '.',
+            'reportid' => $reportid,
+        ]);
         try {
-            foreach ($recordset as $record) {
+            foreach ($rs as $record) {
                 $key = $record->component . '/' . $record->filearea;
-                if ((int) $record->outsidecount === 0 && !isset($labels[$key])) {
+                $count = (int) $record->allcount;
+                $bytes = (int) $record->allbytes;
+                $outsidecount = (int) $record->outsidecount;
+                $outsidebytes = (int) $record->outsidebytes;
+
+                // Accumulate ALL subareas, including those that appear in course backups.
+                if (array_key_exists($record->component, $componenttotals)) {
+                    $componenttotals[$record->component]['allcount'] += $count;
+                    $componenttotals[$record->component]['allbytes'] += $bytes;
+                    $componenttotals[$record->component]['outsidecount'] += $outsidecount;
+                    $componenttotals[$record->component]['outsidebytes'] += $outsidebytes;
+                }
+
+                if ($outsidecount === 0 && !isset($labels[$key])) {
                     continue;
                 }
-                $allbytes = (int) $record->allbytes;
-                $outsidebytes = (int) $record->outsidebytes;
-                $rows[$key] = [
-                    'name' => isset($labels[$key])
-                        ? get_string($labels[$key], 'local_filexray') : $key,
-                    'component' => $record->component,
-                    'filearea' => $record->filearea,
-                    'allcount' => (int) $record->allcount,
-                    'allbytes' => $allbytes,
-                    'allsize' => display_size($allbytes),
-                    'outsidecount' => (int) $record->outsidecount,
-                    'outsidebytes' => $outsidebytes,
-                    'outsidesize' => display_size($outsidebytes),
-                    'priority' => isset($labels[$key]) ? array_search($key, $priority, true) : 100,
-                ];
+                $rows[$key] = self::area_row(
+                    $record->component,
+                    $record->filearea,
+                    $count,
+                    $bytes,
+                    $outsidecount,
+                    $outsidebytes,
+                    $labels[$key] ?? null,
+                    isset($labels[$key]) ? (int) array_search($key, $order, true) : 100
+                );
             }
         } finally {
-            $recordset->close();
+            $rs->close();
         }
 
-        // Always show these expected areas even when they contain no files.
-        foreach ($labels as $key => $stringid) {
+        // Component-only totals correspond to WHERE component = 'backup' or 'core_h5p'.
+        foreach ($componenttotals as $component => $totals) {
+            $key = $component . '/*';
+            $rows[$key] = self::area_row(
+                $component,
+                '*',
+                $totals['allcount'],
+                $totals['allbytes'],
+                $totals['outsidecount'],
+                $totals['outsidebytes'],
+                $labels[$key],
+                (int) array_search($key, $order, true)
+            );
+        }
+
+        // Show the specifically requested areas even on an empty installation.
+        foreach ($labels as $key => $labelids) {
             if (isset($rows[$key])) {
                 continue;
             }
             [$component, $filearea] = explode('/', $key, 2);
-            $rows[$key] = [
-                'name' => get_string($stringid, 'local_filexray'),
-                'component' => $component,
-                'filearea' => $filearea,
-                'allcount' => 0,
-                'allbytes' => 0,
-                'allsize' => display_size(0),
-                'outsidecount' => 0,
-                'outsidebytes' => 0,
-                'outsidesize' => display_size(0),
-                'priority' => array_search($key, $priority, true),
-            ];
+            $rows[$key] = self::area_row($component, $filearea, 0, 0, 0, 0,
+                $labelids, (int) array_search($key, $order, true));
         }
+
         $result = array_values($rows);
         usort($result, static function(array $left, array $right): int {
             return ($left['priority'] <=> $right['priority'])
@@ -162,5 +196,46 @@ final class comparison_summary {
         }
         unset($row);
         return $result;
+    }
+
+    /**
+     * Prepare the presentation of a single file area or component-wide total.
+     *
+     * @param string $component File component.
+     * @param string $filearea File area or * for all.
+     * @param int $count Total non-directory files.
+     * @param int $bytes Total logical bytes.
+     * @param int $outsidecount Non-directory files outside the backup inventory.
+     * @param int $outsidebytes Logical bytes outside the inventory.
+     * @param array|null $labelids Optional category title and explanation string keys.
+     * @param int $priority Sort priority.
+     * @return array
+     */
+    private static function area_row(
+        string $component,
+        string $filearea,
+        int $count,
+        int $bytes,
+        int $outsidecount,
+        int $outsidebytes,
+        ?array $labelids,
+        int $priority
+    ): array {
+        return [
+            'name' => $labelids ? get_string($labelids[0], 'local_filexray')
+                : $component . '/' . $filearea,
+            'description' => $labelids ? get_string($labelids[1], 'local_filexray')
+                : get_string('areaother_desc', 'local_filexray'),
+            'component' => $component,
+            'filearea' => $filearea,
+            'iscomponent' => $filearea === '*',
+            'allcount' => $count,
+            'allbytes' => $bytes,
+            'allsize' => display_size($bytes),
+            'outsidecount' => $outsidecount,
+            'outsidebytes' => $outsidebytes,
+            'outsidesize' => display_size($outsidebytes),
+            'priority' => $priority,
+        ];
     }
 }

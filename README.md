@@ -56,3 +56,9 @@ It does not commit formatter changes automatically.
 The comparison page now shows paginated per-course counts and logical bytes taken from the saved report, followed by a file-area breakdown grouped by `component` and `filearea`. User drafts (`user/draft`), user icons (`user/icon`), private files (`user/private`) and profile files (`user/profile`) are shown first. The draft total is equivalent to `SUM(filesize)` for its file area; physical duplicates are not deduplicated.
 
 For each area, totals across the current `mdl_files` table are displayed alongside counts and logical bytes **not found in this report's course backup inventory**. These areas are not automatically orphaned, and the report does not estimate exclusively reclaimable space.
+
+## Additional file area explanations
+
+The file-area comparison includes labelled, explained rows for `user/draft` (unfinished editor uploads), `user/backup` (user backup storage), `user/icon` (user profile pictures), `badges/badgeimage` (badge graphics), and component-wide totals `backup/*` and `core_h5p/*` (all file areas owned by their respective components). Existing private/profile user rows remain, followed by additional areas discovered by the database query.
+
+The two component-wide totals are deliberately **not additive** with their individual file-area rows. For each fixed row, total logical bytes correspond to an unfiltered `SUM(filesize)` for the same component and optional filearea filter; directory metadata normally has zero bytes. File counts exclude directory placeholders. Distinct file IDs prevent join fan-out from inventories shared by multiple courses. Rows outside the inventory do not imply safely removable files.

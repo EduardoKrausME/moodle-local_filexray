@@ -121,4 +121,101 @@ final class comparison_summary_test extends \advanced_testcase {
         $this->assertSame($expected, $draft['allbytes']);
         $this->assertSame($expected, $draft['outsidebytes']);
     }
+    /**
+     * User areas and badge image totals match the exact requested filters.
+     * Component totals must include all file areas, without counting files
+     * selected in the inventory as outside.
+     */
+    public function test_selected_user_badge_backup_and_h5p_totals(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $reportid = report_manager::create((int) get_admin()->id);
+        $job = $DB->get_record('local_filexray_course', [
+            'reportid' => $reportid, 'courseid' => $course->id,
+        ], '*', MUST_EXIST);
+        $usercontext = \context_user::instance($user->id)->id;
+        $systemcontext = \context_system::instance()->id;
+        $storage = get_file_storage();
+        $fixtures = [
+            ['user', 'draft', $usercontext],
+            ['user', 'backup', $usercontext],
+            ['user', 'icon', $usercontext],
+            ['badges', 'badgeimage', $systemcontext],
+            ['backup', 'course', $systemcontext],
+            ['backup', 'automated', $systemcontext],
+            ['core_h5p', 'libraries', $systemcontext],
+            ['core_h5p', 'cachedassets', $systemcontext],
+        ];
+        $created = [];
+        foreach ($fixtures as $i => $fixture) {
+            [$component, $area, $contextid] = $fixture;
+            $created[$component . '/' . $area] = $storage->create_file_from_string([
+                'contextid' => $contextid,
+                'component' => $component,
+                'filearea' => $area,
+                'itemid' => $i + 1,
+                'filepath' => '/',
+                'filename' => 'comparison-' . $i . '.txt',
+                'userid' => $user->id,
+            ], str_repeat((string) $i, $i + 7));
+        }
+
+        // Selecting one H5P library from a backup excludes it from the
+        // outside-inventory sum, but not the component's total bytes.
+        $selected = $created['core_h5p/libraries'];
+        $DB->insert_record('local_filexray_file', (object) [
+            'reportid' => $reportid,
+            'reportcourseid' => $job->id,
+            'courseid' => $course->id,
+            'fileid' => $selected->get_id(),
+            'contenthash' => $selected->get_contenthash(),
+            'filesize' => $selected->get_filesize(),
+            'contextid' => $selected->get_contextid(),
+            'component' => $selected->get_component(),
+            'filearea' => $selected->get_filearea(),
+            'filename' => $selected->get_filename(),
+        ]);
+
+        $rows = [];
+        foreach (comparison_summary::fileareas($reportid) as $area) {
+            $rows[$area['component'] . '/' . $area['filearea']] = $area;
+        }
+        $filters = [
+            'user/draft' => ['component' => 'user', 'filearea' => 'draft'],
+            'user/backup' => ['component' => 'user', 'filearea' => 'backup'],
+            'user/icon' => ['component' => 'user', 'filearea' => 'icon'],
+            'badges/badgeimage' => ['component' => 'badges', 'filearea' => 'badgeimage'],
+            'backup/*' => ['component' => 'backup'],
+            'core_h5p/*' => ['component' => 'core_h5p'],
+        ];
+        foreach ($filters as $key => $filter) {
+            $expected = (int) $DB->get_field_sql(
+                'SELECT COALESCE(SUM(filesize), 0) FROM {files} WHERE ' .
+                    implode(' AND ', array_map(static function($field): string {
+                        return $field . ' = :' . $field;
+                    }, array_keys($filter))),
+                $filter
+            );
+            $this->assertArrayHasKey($key, $rows);
+            $this->assertSame($expected, $rows[$key]['allbytes'], $key);
+            $this->assertNotEmpty($rows[$key]['description']);
+        }
+
+        $this->assertTrue($rows['backup/*']['iscomponent']);
+        $this->assertTrue($rows['core_h5p/*']['iscomponent']);
+        $this->assertFalse($rows['user/backup']['iscomponent']);
+        $this->assertSame(
+            $rows['core_h5p/*']['allbytes'] - $selected->get_filesize(),
+            $rows['core_h5p/*']['outsidebytes']
+        );
+        $this->assertSame(
+            $rows['backup/course']['allbytes'] + $rows['backup/automated']['allbytes'],
+            $rows['backup/*']['allbytes']
+        );
+    }
+
 }

@@ -41,6 +41,7 @@
         <thead>
             <tr>
                 <th scope="col">{{#str}}areaname, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}areadescription, local_filexray{{/str}}</th>
                 <th scope="col">{{#str}}component, local_filexray{{/str}}</th>
                 <th scope="col">{{#str}}filearea, local_filexray{{/str}}</th>
                 <th scope="col">{{#str}}areatotalfiles, local_filexray{{/str}}</th>
@@ -52,7 +53,8 @@
         <tbody>
             {{#areas}}
                 <tr>
-                    <td>{{name}}</td>
+                    <td>{{#iscomponent}}<strong>{{name}}</strong>{{/iscomponent}}{{^iscomponent}}{{name}}{{/iscomponent}}</td>
+                    <td>{{description}}</td>
                     <td><code>{{component}}</code></td>
                     <td><code>{{filearea}}</code></td>
                     <td>{{allcount}}</td>
