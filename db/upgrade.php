@@ -43,5 +43,15 @@ function xmldb_local_filexray_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026101401, 'local', 'filexray');
     }
 
+    if ($oldversion < 2026101408) {
+        // Google Docs Viewer uses time-limited signed links and must never
+        // depend on an easily guessed site identifier as its signing key.
+        $secret = get_config('local_filexray', 'previewsecret');
+        if (!is_string($secret) || !preg_match('/^[a-f0-9]{64}$/D', $secret)) {
+            set_config('previewsecret', bin2hex(random_bytes(32)), 'local_filexray');
+        }
+        upgrade_plugin_savepoint(true, 2026101408, 'local', 'filexray');
+    }
+
     return true;
 }

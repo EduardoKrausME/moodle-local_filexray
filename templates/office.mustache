@@ -1,0 +1,33 @@
+<div class="local-filexray-office-preview">
+    <h3>{{filename}}</h3>
+    {{^authorised}}
+        <p>{{#str}}officeconsent, local_filexray{{/str}}</p>
+        {{#https}}
+            <form action="{{{officeurl}}}" method="post">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <input type="hidden" name="authorise" value="1">
+                <button type="submit" class="btn btn-primary">
+                    {{#str}}officeapprove, local_filexray{{/str}}
+                </button>
+            </form>
+        {{/https}}
+        {{^https}}
+            <div class="alert alert-warning" role="alert">
+                {{#str}}officehttpsrequired, local_filexray{{/str}}
+            </div>
+        {{/https}}
+    {{/authorised}}
+    {{#authorised}}
+        <p>{{#str}}officeviewernote, local_filexray{{/str}}</p>
+        <iframe src="{{{googleurl}}}" title="{{filename}}" loading="lazy" referrerpolicy="no-referrer"
+            style="display:block;width:100%;height:75vh;border:1px solid #ddd" allowfullscreen></iframe>
+        <p><a href="{{{googleurl}}}" target="_blank" rel="noopener noreferrer">
+            {{#str}}officeopenexternal, local_filexray{{/str}}
+        </a></p>
+    {{/authorised}}
+    <p class="mt-3">
+        <a class="btn btn-secondary" href="{{{downloadurl}}}">
+            {{#str}}downloadfile, local_filexray{{/str}}
+        </a>
+    </p>
+</div>

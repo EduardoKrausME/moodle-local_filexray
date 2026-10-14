@@ -75,3 +75,12 @@ The two component-wide totals are deliberately **not additive** with their indiv
 A comparação reúne em uma única linha o componente `core_h5p`, mostrando todas as áreas de arquivo realmente existentes, e reúne os componentes `theme_*` em uma linha **Temas**, exibindo até cinco áreas e `etc...` quando houver outras. As quantidades e os bytes representam a soma de todas as áreas agrupadas, mesmo as que não aparecem na lista abreviada.
 
 A tabela **Não encontrado nos inventários dos cursos** exclui, tanto na contagem quanto na paginação, os componentes já classificados na tabela **Outras áreas de arquivos**, como arquivos dos usuários, emblemas, backups, H5P e temas. Assim, a lista residual permanece voltada aos demais componentes que o inventário dos cursos não identificou. A ausência no inventário não comprova que um arquivo seja órfão ou possa ser apagado.
+
+
+## Visualização de arquivos do inventário
+
+Na página de cada curso, o File X-Ray ignora os registros de diretório com `filename = '.'` e mantém a paginação baseada somente nos arquivos reais. Os links de pré-visualização verificam a associação com o relatório, o curso, o ID do arquivo e seu `contenthash` original.
+
+Imagens comuns, PDFs e arquivos de áudio e vídeo compatíveis são servidos pelo próprio Moodle, com autenticação e verificação de `local/filexray:view`. Tipos potencialmente ativos (HTML, SVG, JavaScript) e outros formatos desconhecidos são entregues como download, não renderizados inline.
+
+Documentos Office (`.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx`, formatos OpenDocument) podem ser visualizados no **Google Docs Viewer**, somente após uma confirmação específica do administrador. O plugin emite então um endereço HTTPS assinado com HMAC, limitado ao arquivo do relatório e válido por até dez minutos, acessível ao Google sem a sessão Moodle. Durante esse período, qualquer pessoa que obtenha o endereço completo poderá acessar o arquivo; a prévia envolve transferência do documento ao serviço Google e depende de um Moodle acessível pela internet. Não utilize a opção para documentos confidenciais sem autorização institucional. O download autenticado permanece disponível como alternativa. O inventário não envia dados ao Google automaticamente.

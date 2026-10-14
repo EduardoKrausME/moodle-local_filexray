@@ -40,26 +40,41 @@ $PAGE->set_title(format_string($coursejob->coursename));
 $PAGE->set_heading(get_string('matchedfiles', 'local_filexray'));
 
 $limit = 50;
-$rows = $DB->get_records('local_filexray_file', ['reportcourseid' => $coursejobid],
+// Directory placeholders have filename "." and are not downloadable files.
+$totalfiles = $DB->count_records_select('local_filexray_file',
+    'reportcourseid = :courseid AND filename <> :directory',
+    ['courseid' => $coursejobid, 'directory' => '.']);
+$rows = $DB->get_records_select('local_filexray_file',
+    'reportcourseid = :courseid AND filename <> :directory',
+    ['courseid' => $coursejobid, 'directory' => '.'],
     'fileid ASC', 'id, fileid, filename, component, filearea, contextid, filesize',
     $page * $limit, $limit);
 $files = [];
 foreach ($rows as $row) {
+    $kind = \local_filexray\file_preview::kind($row->filename);
+    $url = new moodle_url($kind === 'office'
+        ? '/local/filexray/office.php' : '/local/filexray/preview.php', [
+        'id' => $id, 'coursejobid' => $coursejobid, 'fileid' => $row->fileid,
+    ]);
     $files[] = [
         'fileid' => $row->fileid, 'filename' => $row->filename,
         'component' => $row->component, 'filearea' => $row->filearea,
         'contextid' => $row->contextid, 'size' => display_size($row->filesize),
+        'previewurl' => $url->out(false),
+        'canpreview' => $kind !== 'download',
+        'candownload' => $kind === 'download',
+        'isoffice' => $kind === 'office',
     ];
 }
 $baseurl = '/local/filexray/course.php';
 $data = [
     'coursename' => format_string($coursejob->coursename),
     'files' => $files,
-    'filecount' => $coursejob->filecount,
+    'filecount' => $totalfiles,
     'previous' => $page > 0,
     'previousurl' => (new moodle_url($baseurl,
         ['id' => $id, 'coursejobid' => $coursejobid, 'page' => max(0, $page - 1)]))->out(false),
-    'next' => ($page + 1) * $limit < $coursejob->filecount,
+    'next' => ($page + 1) * $limit < $totalfiles,
     'nexturl' => (new moodle_url($baseurl,
         ['id' => $id, 'coursejobid' => $coursejobid, 'page' => $page + 1]))->out(false),
     'reporturl' => (new moodle_url('/local/filexray/report.php', ['id' => $id]))->out(false),
