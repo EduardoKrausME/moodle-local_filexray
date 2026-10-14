@@ -25,7 +25,6 @@
 require_once(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT);
-$page = max(0, optional_param('page', 0, PARAM_INT));
 $coursepage = max(0, optional_param('coursepage', 0, PARAM_INT));
 require_login();
 $context = context_system::instance();
@@ -37,17 +36,8 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('comparison', 'local_filexray'));
 $PAGE->set_heading(get_string('comparison', 'local_filexray'));
 
-$params = ['reportid' => $id, 'dir' => '.'];
-// Use the same classification as the other-area summary, so a file ID
-// grouped there does not also appear in the residual unmatched listing.
-[$classifiedsql, $classifiedparams] = \local_filexray\comparison_summary::classified_condition('f');
-$params = array_merge($params, $classifiedparams);
-$where = "f.filename <> :dir
-          AND NOT EXISTS (
-              SELECT 1 FROM {local_filexray_file} fx
-               WHERE fx.reportid = :reportid AND fx.fileid = f.id
-          )
-          AND NOT " . $classifiedsql;
+// Keep the card count consistent with the dedicated residual-files page.
+[$where, $params] = \local_filexray\comparison_summary::unmatched_condition($id);
 $total = (int) $DB->count_records_select('files', "filename <> :dir", ['dir' => '.']);
 $matched = (int) $DB->count_records_sql(
     "SELECT COUNT(DISTINCT fileid) FROM {local_filexray_file}
@@ -99,49 +89,25 @@ foreach ($areas as &$area) {
 }
 unset($area);
 
-$limit = 50;
-$rows = $DB->get_records_sql(
-    "SELECT f.id, f.filename, f.component, f.filearea, f.filesize, f.contextid
-       FROM {files} f
-      WHERE " . $where . " ORDER BY f.id ASC",
-    $params, $page * $limit, $limit
-);
-$files = [];
-foreach ($rows as $r) {
-    $files[] = [
-        'id' => $r->id,
-        'name' => $r->filename,
-        'component' => $r->component,
-        'filearea' => $r->filearea,
-        'contextid' => $r->contextid,
-        'size' => display_size($r->filesize),
-    ];
-}
+$unmatchedurl = (new moodle_url('/local/filexray/unmatched.php', ['id' => $id]))->out(false);
+
 $data = [
     'reportid' => $id,
+    'unmatchedurl' => $unmatchedurl,
     'courses' => $courses,
     'coursecount' => $coursecount,
     'areas' => $areas,
     'previouscourse' => $coursepage > 0,
     'previouscourseurl' => (new moodle_url('/local/filexray/comparison.php', [
-        'id' => $id, 'page' => $page, 'coursepage' => max(0, $coursepage - 1),
+        'id' => $id, 'coursepage' => max(0, $coursepage - 1),
     ]))->out(false),
     'nextcourse' => ($coursepage + 1) * $coursepagesize < $coursecount,
     'nextcourseurl' => (new moodle_url('/local/filexray/comparison.php', [
-        'id' => $id, 'page' => $page, 'coursepage' => $coursepage + 1,
+        'id' => $id, 'coursepage' => $coursepage + 1,
     ]))->out(false),
     'total' => $total,
     'matched' => $matched,
     'unmatched' => $unmatched,
-    'files' => $files,
-    'provisional' => $report->status !== 'completed',
-    'previous' => $page > 0,
-    'previousurl' => (new moodle_url('/local/filexray/comparison.php',
-        ['id' => $id, 'page' => max(0, $page - 1), 'coursepage' => $coursepage]))->out(false),
-    'next' => ($page + 1) * $limit < $unmatched,
-    'nexturl' => (new moodle_url('/local/filexray/comparison.php',
-        ['id' => $id, 'page' => $page + 1, 'coursepage' => $coursepage]))->out(false),
-    'reporturl' => (new moodle_url('/local/filexray/report.php', ['id' => $id]))->out(false),
 ];
 
 echo $OUTPUT->header();

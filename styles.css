@@ -49,3 +49,25 @@
     color: inherit;
     overflow-wrap: anywhere;
 }
+
+/*
+ * A Moodle course name may carry multilang spans. Preserve their safe
+ * markup but show only the language chosen in the Moodle page.
+ */
+.local-filexray-comparison span.multilang {
+    display: none;
+}
+
+html:lang(pt-BR) .local-filexray-comparison span.multilang[lang="pt_br"],
+html[lang="pt_br"] .local-filexray-comparison span.multilang[lang="pt_br"],
+html:lang(pt-PT) .local-filexray-comparison span.multilang[lang="pt_pt"],
+html:lang(pt) .local-filexray-comparison span.multilang[lang="pt"],
+html:lang(en) .local-filexray-comparison span.multilang[lang="en"],
+html:lang(en) .local-filexray-comparison span.multilang[lang="en_us"],
+html:lang(es) .local-filexray-comparison span.multilang[lang="es"],
+html:lang(es) .local-filexray-comparison span.multilang[lang="es_mx"],
+html:lang(fr) .local-filexray-comparison span.multilang[lang="fr"],
+html:lang(de) .local-filexray-comparison span.multilang[lang="de"],
+html:lang(it) .local-filexray-comparison span.multilang[lang="it"] {
+    display: inline;
+}

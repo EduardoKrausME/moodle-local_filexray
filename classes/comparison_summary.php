@@ -41,7 +41,7 @@ final class comparison_summary {
     public static function courses(int $reportid, int $offset, int $limit): array {
         global $DB;
 
-        $sql = "SELECT rc.id, rc.courseid, rc.coursename, rc.status,
+        $sql = "SELECT rc.id, rc.courseid, rc.coursename, c.fullname AS currentfullname, rc.status,
                        COALESCE(inventory.filecount, 0) AS filecount,
                        COALESCE(inventory.bytecount, 0) AS bytecount
                   FROM {local_filexray_course} rc
@@ -51,6 +51,7 @@ final class comparison_summary {
                       WHERE reportid = :inventoryreport AND filename <> :directory
                    GROUP BY reportcourseid
                        ) inventory ON inventory.reportcourseid = rc.id
+             LEFT JOIN {course} c ON c.id = rc.courseid
                  WHERE rc.reportid = :coursereport
               ORDER BY rc.courseid ASC";
         $records = $DB->get_records_sql($sql, [
@@ -64,7 +65,7 @@ final class comparison_summary {
             $courses[] = [
                 'id' => (int) $record->id,
                 'courseid' => (int) $record->courseid,
-                'coursename' => $record->coursename,
+                'coursename' => self::safe_course_name_html($record->currentfullname ?? $record->coursename),
                 'status' => $status,
                 'filecount' => (int) $record->filecount,
                 'bytecount' => $bytes,
@@ -72,6 +73,53 @@ final class comparison_summary {
             ];
         }
         return $courses;
+    }
+
+    /**
+     * Escape course names while retaining only the explicit multilang spans.
+     *
+     * Original course fullnames can contain HTML; the template intentionally
+     * uses triple Mustache braces so content MUST be escaped here. Any other
+     * HTML tag, including event handlers and scripts, is reduced to plain text.
+     *
+     * @param string $name Current fullname or stored fallback.
+     * @return string HTML-safe name with optional multilang spans.
+     */
+    public static function safe_course_name_html(string $name): string {
+        $cleantext = static function(string $value): string {
+            return s(strip_tags(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        };
+
+        // Without multilang markup, do not pass arbitrary course HTML through.
+        if (stripos($name, 'multilang') === false) {
+            return $cleantext($name);
+        }
+
+        $pattern = '~<span\\b([^>]*)>(.*?)</span>~is';
+        if (!preg_match_all($pattern, $name, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+            return $cleantext($name);
+        }
+
+        $html = '';
+        $position = 0;
+        foreach ($matches as $match) {
+            $start = $match[0][1];
+            $html .= $cleantext(substr($name, $position, $start - $position));
+            $attributes = $match[1][0];
+            $content = $cleantext($match[2][0]);
+            $hasclass = preg_match('/\\bclass\\s*=\\s*([\'"])(.*?)\\1/is', $attributes, $classmatch)
+                && preg_match('/(?:^|\\s)multilang(?:\\s|$)/i', $classmatch[2]);
+            $haslanguage = preg_match('/\\blang\\s*=\\s*([\'"])([a-z]{2,3}(?:[-_][a-z]{2,8})?)\\1/i',
+                $attributes, $langmatch);
+            if ($hasclass && $haslanguage) {
+                $html .= '<span class="multilang" lang="' . strtolower($langmatch[2]) . '">' . $content . '</span>';
+            } else {
+                $html .= $content;
+            }
+            $position = $start + strlen($match[0][0]);
+        }
+        $html .= $cleantext(substr($name, $position));
+        return $html;
     }
 
     /**
@@ -112,6 +160,28 @@ final class comparison_summary {
             'otherstamps' => 'stamps',
             'othertheme' => 'theme_',
         ]];
+    }
+
+    /**
+     * Filter file IDs not selected by the given inventory and not already
+     * listed under the separately classified file areas.
+     *
+     * @param int $reportid Report identifier.
+     * @return array SQL condition and bound parameters.
+     */
+    public static function unmatched_condition(int $reportid): array {
+        [$classifiedsql, $classifiedparams] = self::classified_condition('f');
+        $where = "f.filename <> :dir
+                  AND NOT EXISTS (
+                      SELECT 1 FROM {local_filexray_file} fx
+                       WHERE fx.reportid = :reportid AND fx.fileid = f.id
+                  )
+                  AND NOT " . $classifiedsql;
+
+        return [$where, array_merge($classifiedparams, [
+            'dir' => '.',
+            'reportid' => $reportid,
+        ])];
     }
 
     /**

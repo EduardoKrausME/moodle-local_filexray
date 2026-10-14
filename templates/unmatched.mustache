@@ -1,0 +1,32 @@
+<div class="local-filexray-unmatched">
+    {{#provisional}}
+        <div class="alert alert-warning" role="alert">
+            {{#str}}reportnotready, local_filexray{{/str}}
+        </div>
+    {{/provisional}}
+    <p>{{#str}}residual_note, local_filexray{{/str}}</p>
+    <p><strong>{{#str}}unmatchedcount, local_filexray{{/str}}</strong> {{total}}</p>
+    <p><a class="btn btn-outline-secondary" href="{{{comparisonurl}}}">← {{#str}}comparison, local_filexray{{/str}}</a></p>
+    <table class="generaltable table">
+        <thead><tr>
+            <th scope="col">{{#str}}fileid, local_filexray{{/str}}</th>
+            <th scope="col">{{#str}}filename, local_filexray{{/str}}</th>
+            <th scope="col">{{#str}}component, local_filexray{{/str}}</th>
+            <th scope="col">{{#str}}filearea, local_filexray{{/str}}</th>
+            <th scope="col">Context ID</th>
+            <th scope="col">{{#str}}filesize, local_filexray{{/str}}</th>
+        </tr></thead>
+        <tbody>{{#files}}<tr>
+            <td>{{id}}</td>
+            <td>{{name}}</td>
+            <td>{{component}}</td>
+            <td>{{filearea}}</td>
+            <td>{{contextid}}</td>
+            <td>{{size}}</td>
+        </tr>{{/files}}</tbody>
+    </table>
+    <div class="d-flex gap-2">
+        {{#previous}}<a href="{{{previousurl}}}" class="btn btn-secondary">{{#str}}previous, local_filexray{{/str}}</a>{{/previous}}
+        {{#next}}<a href="{{{nexturl}}}" class="btn btn-secondary">{{#str}}next, local_filexray{{/str}}</a>{{/next}}
+    </div>
+</div>

@@ -136,4 +136,5 @@ $string['status'] = 'Situação';
 $string['totaldatabase'] = 'Registros de arquivos no Moodle';
 $string['unmatched'] = 'Não encontrado nos inventários dos cursos';
 $string['unmatchedcount'] = 'Registros fora dos inventários e das categorias já classificadas';
+$string['unmatchedview'] = 'Ver arquivos não encontrados nos inventários dos cursos';
 $string['view'] = 'Visualizar';

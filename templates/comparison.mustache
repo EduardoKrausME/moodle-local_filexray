@@ -39,6 +39,11 @@
             </div>
         </div>
     </div>
+    <p class="mb-4">
+        <a class="btn btn-outline-primary" href="{{{unmatchedurl}}}">
+            {{#str}}unmatchedview, local_filexray{{/str}} →
+        </a>
+    </p>
     <h3>{{#str}}coursesummary, local_filexray{{/str}}</h3>
     <p>{{#str}}coursesummary_note, local_filexray{{/str}}</p>
     <table class="generaltable table">
@@ -53,7 +58,7 @@
         <tbody>
             {{#courses}}
                 <tr>
-                    <td><a href="{{{url}}}">{{coursename}} (#{{courseid}})</a></td>
+                    <td><a href="{{{url}}}">{{{coursename}}} (#{{courseid}})</a></td>
                     <td>{{status}}</td>
                     <td>{{filecount}}</td>
                     <td>{{bytecount}} ({{size}})</td>
@@ -97,29 +102,4 @@
             {{/areas}}
         </tbody>
     </table>
-    <h3>{{#str}}unmatched, local_filexray{{/str}}</h3>
-    <p>{{#str}}residual_note, local_filexray{{/str}}</p>
-    <table class="generaltable table">
-        <thead><tr>
-            <th scope="col">{{#str}}fileid, local_filexray{{/str}}</th>
-            <th scope="col">{{#str}}filename, local_filexray{{/str}}</th>
-            <th scope="col">{{#str}}component, local_filexray{{/str}}</th>
-            <th scope="col">{{#str}}filearea, local_filexray{{/str}}</th>
-            <th scope="col">Context ID</th>
-            <th scope="col">{{#str}}filesize, local_filexray{{/str}}</th>
-        </tr></thead>
-        <tbody>{{#files}}<tr>
-            <td>{{id}}</td>
-            <td>{{name}}</td>
-            <td>{{component}}</td>
-            <td>{{filearea}}</td>
-            <td>{{contextid}}</td>
-            <td>{{size}}</td>
-        </tr>{{/files}}</tbody>
-    </table>
-    <div class="d-flex gap-2">
-        {{#previous}}<a href="{{{previousurl}}}" class="btn btn-secondary">{{#str}}previous, local_filexray{{/str}}</a>{{/previous}}
-        {{#next}}<a href="{{{nexturl}}}" class="btn btn-secondary">{{#str}}next, local_filexray{{/str}}</a>{{/next}}
-        <a href="{{{reporturl}}}" class="btn btn-link">{{#str}}report, local_filexray, {{reportid}}{{/str}}</a>
-    </div>
 </div>

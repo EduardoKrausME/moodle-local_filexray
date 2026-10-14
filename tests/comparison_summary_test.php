@@ -77,6 +77,91 @@ final class comparison_summary_test extends \advanced_testcase {
     }
 
     /**
+     * Only recognised multilang span markup may be rendered unescaped.
+     */
+    public function test_multilang_course_names_are_safely_rendered(): void {
+        $original = '<span lang="pt_br" class="multilang">Políticas Públicas</span>' .
+            '<span lang="es" class="multilang">Políticas Públicas y Diplomacia</span>' .
+            '<span lang="en" class="multilang">Public Policy</span>';
+        $rendered = comparison_summary::safe_course_name_html($original);
+        $this->assertStringContainsString('<span class="multilang" lang="pt_br">Políticas Públicas</span>',
+            $rendered);
+        $this->assertStringContainsString('<span class="multilang" lang="en">Public Policy</span>', $rendered);
+        $this->assertStringNotContainsString('&lt;span', $rendered);
+
+        $unsafe = '<span class="multilang" lang="en" onclick="alert(1)">' .
+            '<img src=x onerror=alert(2)>Unsafe &lt;script&gt;alert(3)&lt;/script&gt;</span>';
+        $safe = comparison_summary::safe_course_name_html($unsafe);
+        $this->assertStringNotContainsString('onclick=', $safe);
+        $this->assertStringNotContainsString('<img', $safe);
+        $this->assertStringNotContainsString('<script', $safe);
+        $this->assertStringContainsString('<span class="multilang" lang="en">', $safe);
+        $this->assertStringContainsString('Unsafe alert(3)', $safe);
+    }
+
+    /**
+     * A saved report can still show current multilang course names.
+     */
+    public function test_course_summary_preserves_current_multilang_markup(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $course = $this->getDataGenerator()->create_course();
+        $reportid = report_manager::create((int) get_admin()->id);
+        $DB->set_field('course', 'fullname',
+            '<span lang="pt_br" class="multilang">Curso PT</span>' .
+            '<span lang="en" class="multilang">Course EN</span>',
+            ['id' => $course->id]);
+        $courses = comparison_summary::courses($reportid, 0, 50);
+        $found = false;
+        foreach ($courses as $row) {
+            if ($row['courseid'] === (int) $course->id) {
+                $this->assertStringContainsString('<span class="multilang" lang="pt_br">Curso PT</span>',
+                    $row['coursename']);
+                $this->assertStringContainsString('<span class="multilang" lang="en">Course EN</span>',
+                    $row['coursename']);
+                $found = true;
+                break;
+            }
+        }
+        $this->assertTrue($found);
+    }
+
+    /**
+     * The page and the card count must use the same residual file predicate.
+     */
+    public function test_unmatched_condition_excludes_classified_areas(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $storage = get_file_storage();
+        $contextid = \context_system::instance()->id;
+        $files = [];
+        foreach (['user', 'mod_resource'] as $i => $component) {
+            $files[$component] = $storage->create_file_from_string([
+                'contextid' => $contextid,
+                'component' => $component,
+                'filearea' => $component === 'user' ? 'draft' : 'content',
+                'itemid' => 300 + $i,
+                'filepath' => '/',
+                'filename' => 'residual-' . $i . '.txt',
+            ], 'test-' . $i);
+        }
+
+        $reportid = report_manager::create((int) get_admin()->id);
+        [$where, $params] = comparison_summary::unmatched_condition($reportid);
+        foreach ($files as $component => $file) {
+            $count = (int) $DB->count_records_sql(
+                "SELECT COUNT(*) FROM {files} f WHERE f.id = :fileid AND " . $where,
+                ['fileid' => $file->get_id()] + $params
+            );
+            $this->assertSame($component === 'mod_resource' ? 1 : 0, $count, $component);
+        }
+    }
+
+    /**
      * User drafts include exactly the logical bytes in mdl_files.
      */
     public function test_file_area_summary_counts_user_draft_and_profile_areas(): void {

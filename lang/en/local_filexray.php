@@ -136,4 +136,5 @@ $string['status'] = 'Status';
 $string['totaldatabase'] = 'File records in Moodle';
 $string['unmatched'] = 'Not included in inspected course inventories';
 $string['unmatchedcount'] = 'Records outside course inventories and other-area categories';
+$string['unmatchedview'] = 'View files not found in course inventories';
 $string['view'] = 'View';
