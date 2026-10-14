@@ -43,48 +43,52 @@ final class report_manager {
         $reportlocks = [];
         try {
             $transaction = $DB->start_delegated_transaction();
-            $configured = get_config('local_filexray', 'maxreports');
-            $maxreports = max(1, is_numeric($configured) ? (int) $configured : 10);
-            $countreports = $DB->count_records('local_filexray_report');
-            // Remove the oldest report before storing a new one.
-            while ($countreports >= $maxreports) {
-                $oldest = $DB->get_records('local_filexray_report', [], 'timecreated ASC, id ASC', 'id', 0, 1);
-                if (!$oldest) {
-                    break;
-                }
-                $old = reset($oldest);
-                self::delete_locked((int) $old->id, $reportlocks);
-                $countreports--;
-            }
-            $now = time();
-            $report = (object) [
-                'userid' => $userid, 'status' => 'queued',
-                'totalcourses' => 0, 'timecreated' => $now,
-                'timestarted' => 0, 'timefinished' => 0, 'timemodified' => $now,
-            ];
-            $id = (int) $DB->insert_record('local_filexray_report', $report);
-            $count = 0;
-            $rs = $DB->get_recordset_select('course', 'id <> :siteid',
-                ['siteid' => SITEID], 'id ASC', 'id, fullname');
             try {
-                foreach ($rs as $course) {
-                    $DB->insert_record('local_filexray_course', (object) [
-                        'reportid' => $id, 'courseid' => $course->id,
-                        'coursename' => self::plain_course_name($course), 'status' => 'pending',
-                        'filecount' => 0, 'timestarted' => 0,
-                        'timefinished' => 0, 'errormessage' => null,
-                    ], false);
-                    $count++;
+                $configured = get_config('local_filexray', 'maxreports');
+                $maxreports = max(1, is_numeric($configured) ? (int) $configured : 10);
+                $countreports = $DB->count_records('local_filexray_report');
+                // Remove the oldest report before storing a new one.
+                while ($countreports >= $maxreports) {
+                    $oldest = $DB->get_records('local_filexray_report', [], 'timecreated ASC, id ASC', 'id', 0, 1);
+                    if (!$oldest) {
+                        break;
+                    }
+                    $old = reset($oldest);
+                    self::delete_locked((int) $old->id, $reportlocks);
+                    $countreports--;
                 }
-            } finally {
-                $rs->close();
+                $now = time();
+                $report = (object) [
+                    'userid' => $userid, 'status' => 'queued',
+                    'totalcourses' => 0, 'timecreated' => $now,
+                    'timestarted' => 0, 'timefinished' => 0, 'timemodified' => $now,
+                ];
+                $id = (int) $DB->insert_record('local_filexray_report', $report);
+                $count = 0;
+                $rs = $DB->get_recordset_select('course', 'id <> :siteid',
+                    ['siteid' => SITEID], 'id ASC', 'id, fullname');
+                try {
+                    foreach ($rs as $course) {
+                        $DB->insert_record('local_filexray_course', (object) [
+                            'reportid' => $id, 'courseid' => $course->id,
+                            'coursename' => self::plain_course_name($course), 'status' => 'pending',
+                            'filecount' => 0, 'timestarted' => 0,
+                            'timefinished' => 0, 'errormessage' => null,
+                        ], false);
+                        $count++;
+                    }
+                } finally {
+                    $rs->close();
+                }
+                $DB->update_record('local_filexray_report', (object) [
+                    'id' => $id, 'totalcourses' => $count,
+                    'status' => $count ? 'queued' : 'completed',
+                    'timefinished' => $count ? 0 : $now,
+                ]);
+                $transaction->allow_commit();
+            } catch (\Throwable $error) {
+                $transaction->rollback($error);
             }
-            $DB->update_record('local_filexray_report', (object) [
-                'id' => $id, 'totalcourses' => $count,
-                'status' => $count ? 'queued' : 'completed',
-                'timefinished' => $count ? 0 : $now,
-            ]);
-            $transaction->allow_commit();
             if ($count) {
                 runner::enqueue($id);
             }
@@ -126,12 +130,12 @@ final class report_manager {
         }
         $reportlocks[] = $lock;
         if (!$DB->record_exists('local_filexray_report', ['id' => $reportid])) {
-                throw new \moodle_exception('notfound', 'local_filexray');
-            }
-            // Never delete Moodle's files or the physical filedir content.
-            $DB->delete_records('local_filexray_file', ['reportid' => $reportid]);
-            $DB->delete_records('local_filexray_course', ['reportid' => $reportid]);
-            $DB->delete_records('local_filexray_report', ['id' => $reportid]);
+            throw new \moodle_exception('notfound', 'local_filexray');
+        }
+        // Never delete Moodle's files or the physical filedir content.
+        $DB->delete_records('local_filexray_file', ['reportid' => $reportid]);
+        $DB->delete_records('local_filexray_course', ['reportid' => $reportid]);
+        $DB->delete_records('local_filexray_report', ['id' => $reportid]);
     }
 
     /**
@@ -147,8 +151,12 @@ final class report_manager {
         $reportlocks = [];
         try {
             $transaction = $DB->start_delegated_transaction();
-            self::delete_locked($reportid, $reportlocks);
-            $transaction->allow_commit();
+            try {
+                self::delete_locked($reportid, $reportlocks);
+                $transaction->allow_commit();
+            } catch (\Throwable $error) {
+                $transaction->rollback($error);
+            }
         } finally {
             foreach ($reportlocks as $reportlock) {
                 $reportlock->release();
