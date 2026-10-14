@@ -1,0 +1,27 @@
+<div class="local-filexray-course">
+    <h3>{{coursename}}</h3>
+    <p>{{#str}}matchedfiles, local_filexray{{/str}} {{filecount}}</p>
+    <table class="generaltable table">
+        <thead><tr>
+            <th scope="col">{{#str}}fileid, local_filexray{{/str}}</th>
+            <th scope="col">{{#str}}filename, local_filexray{{/str}}</th>
+            <th scope="col">{{#str}}component, local_filexray{{/str}}</th>
+            <th scope="col">{{#str}}filearea, local_filexray{{/str}}</th>
+            <th scope="col">Context ID</th>
+            <th scope="col">{{#str}}filesize, local_filexray{{/str}}</th>
+        </tr></thead>
+        <tbody>{{#files}}<tr>
+            <td>{{fileid}}</td>
+            <td>{{filename}}</td>
+            <td>{{component}}</td>
+            <td>{{filearea}}</td>
+            <td>{{contextid}}</td>
+            <td>{{size}}</td>
+        </tr>{{/files}}</tbody>
+    </table>
+    <div class="d-flex gap-2">
+        {{#previous}}<a href="{{previousurl}}" class="btn btn-secondary">{{#str}}previous, local_filexray{{/str}}</a>{{/previous}}
+        {{#next}}<a href="{{nexturl}}" class="btn btn-secondary">{{#str}}next, local_filexray{{/str}}</a>{{/next}}
+        <a href="{{reporturl}}" class="btn btn-link">{{#str}}reports, local_filexray{{/str}}</a>
+    </div>
+</div>

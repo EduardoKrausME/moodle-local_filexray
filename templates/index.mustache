@@ -1,0 +1,36 @@
+<div class="local-filexray-index" data-region="filexray-index" data-report-url="{{reportbaseurl}}">
+    <p>{{#str}}notbackup, local_filexray{{/str}}</p>
+    <p>{{#str}}croninfo, local_filexray{{/str}}</p>
+    <p><strong>{{#str}}coursecount, local_filexray{{/str}}</strong> {{courses}}</p>
+    {{#canrun}}
+        <button id="filexray-generate" class="btn btn-primary" type="button">
+            {{#str}}generate, local_filexray{{/str}}
+        </button>
+    {{/canrun}}
+    <h3 class="mt-4">{{#str}}previousreports, local_filexray{{/str}}</h3>
+    {{#hasreports}}
+        <table class="generaltable table">
+            <thead>
+                <tr>
+                    <th scope="col">{{#str}}id, local_filexray{{/str}}</th>
+                    <th scope="col">{{#str}}status, local_filexray{{/str}}</th>
+                    <th scope="col">{{#str}}courses, local_filexray{{/str}}</th>
+                    <th scope="col">{{#str}}created, local_filexray{{/str}}</th>
+                    <th scope="col">{{#str}}view, local_filexray{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#reports}}
+                    <tr>
+                        <td>{{id}}</td>
+                        <td>{{status}}</td>
+                        <td>{{totalcourses}}</td>
+                        <td>{{created}}</td>
+                        <td><a href="{{url}}">{{#str}}view, local_filexray{{/str}}</a></td>
+                    </tr>
+                {{/reports}}
+            </tbody>
+        </table>
+    {{/hasreports}}
+    {{^hasreports}}<p>{{#str}}no_reports, local_filexray{{/str}}</p>{{/hasreports}}
+</div>

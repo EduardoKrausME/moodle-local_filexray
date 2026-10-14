@@ -1,0 +1,26 @@
+name: Validate File X-Ray
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin
+      - uses: actions/checkout@v4
+        with:
+          repository: EduardoKrausME/moodle-plugin-validate
+          ref: master
+          path: validator
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: PHP syntax
+        run: find plugin -name '*.php' -type f -print0 | xargs -0 -n1 php -l
+      - name: Complete Moodle plugin validation
+        run: python3 validator/.chatgpt/run.py --check "$GITHUB_WORKSPACE/plugin"

@@ -1,0 +1,51 @@
+<div data-region="filexray-report" data-reportid="{{id}}" data-course-url="{{coursebaseurl}}">
+    <p>{{#str}}croninfo, local_filexray{{/str}}</p>
+    <p>{{#str}}notbackup, local_filexray{{/str}}</p>
+    <div role="status" aria-live="polite">
+        <strong data-region="summary">0 / {{total}}</strong>
+        <span data-region="percent">0%</span>
+    </div>
+    <progress data-region="progress" max="100" value="0" class="w-100"
+        aria-label="{{#str}}progress, local_filexray{{/str}}"></progress>
+    <div class="d-flex flex-wrap gap-3 my-3">
+        <span>{{#str}}donecount, local_filexray{{/str}} <strong data-region="completed">0</strong></span>
+        <span>{{#str}}failedcount, local_filexray{{/str}} <strong data-region="failed">0</strong></span>
+        <span>{{#str}}files, local_filexray{{/str}} <strong data-region="files">0</strong></span>
+    </div>
+    {{#canresume}}
+        <button data-action="resume" class="btn btn-secondary" type="button">
+            {{#str}}resume, local_filexray{{/str}}
+        </button>
+    {{/canresume}}
+    <a href="{{comparisonurl}}" class="btn btn-outline-secondary">
+        {{#str}}comparison, local_filexray{{/str}}
+    </a>
+    <a href="{{indexurl}}" class="btn btn-link">{{#str}}previousreports, local_filexray{{/str}}</a>
+    <p class="mt-3">{{#str}}staleinfo, local_filexray{{/str}}</p>
+    <table class="generaltable table" data-region="course-table"
+           data-pending="{{#str}}pending, local_filexray{{/str}}"
+           data-running="{{#str}}running, local_filexray{{/str}}"
+           data-completed="{{#str}}completed, local_filexray{{/str}}"
+           data-failed="{{#str}}failed, local_filexray{{/str}}">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}course, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}status, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}files, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}started, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}finished, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}error, local_filexray{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody data-region="rows"></tbody>
+    </table>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" type="button" data-action="previous">
+            {{#str}}previous, local_filexray{{/str}}
+        </button>
+        <span data-region="range"></span>
+        <button class="btn btn-outline-secondary" type="button" data-action="next">
+            {{#str}}next, local_filexray{{/str}}
+        </button>
+    </div>
+</div>
