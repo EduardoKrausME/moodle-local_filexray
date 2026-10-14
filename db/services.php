@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 $functions = [
     'local_filexray_create_report' => [
         'classname' => 'local_filexray\\external\\create_report',
+        'methodname' => 'execute',
         'description' => 'Create an inventory report and enqueue its first course.',
         'type' => 'write',
         'ajax' => true,
@@ -34,6 +35,7 @@ $functions = [
     ],
     'local_filexray_report_status' => [
         'classname' => 'local_filexray\\external\\report_status',
+        'methodname' => 'execute',
         'description' => 'Get report progress and a page of course statuses.',
         'type' => 'read',
         'ajax' => true,
@@ -41,6 +43,7 @@ $functions = [
     ],
     'local_filexray_resume_report' => [
         'classname' => 'local_filexray\\external\\resume_report',
+        'methodname' => 'execute',
         'description' => 'Resume pending or abandoned inventory courses.',
         'type' => 'write',
         'ajax' => true,
