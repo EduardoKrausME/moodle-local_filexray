@@ -34,6 +34,8 @@ use core_external\external_value;
  */
 final class create_report extends external_api {
     /**
+     * execute_parameters
+     *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
@@ -41,7 +43,10 @@ final class create_report extends external_api {
     }
 
     /**
+     * execute
+     *
      * @return array
+     * @throws \required_capability_exception
      */
     public static function execute(): array {
         global $USER;
@@ -54,6 +59,8 @@ final class create_report extends external_api {
     }
 
     /**
+     * execute_returns
+     *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {

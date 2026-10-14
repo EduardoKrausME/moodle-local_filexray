@@ -32,7 +32,9 @@ use core_privacy\local\metadata\provider as metadata_provider;
  */
 final class provider implements metadata_provider {
     /**
-     * @param collection $collection Moodle metadata collection.
+     * get_metadata
+     *
+     * @param collection $collection
      * @return collection
      */
     public static function get_metadata(collection $collection): collection {

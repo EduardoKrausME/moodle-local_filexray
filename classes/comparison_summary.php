@@ -263,7 +263,7 @@ final class comparison_summary {
                     }
                 }
 
-                // core_h5p and every theme_* component appear only in their
+                // Core_h5p and every theme_* component appear only in their..
                 // consolidated row, never as duplicate per-area entries.
                 if ($component === 'core_h5p' || $group === 'theme_*') {
                     continue;

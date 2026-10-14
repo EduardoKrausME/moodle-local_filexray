@@ -33,7 +33,9 @@ use Throwable;
  */
 final class runner {
     /**
-     * @param int $reportid Report ID.
+     * enqueue
+     *
+     * @param int $reportid
      * @return void
      */
     public static function enqueue(int $reportid): void {

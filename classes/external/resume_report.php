@@ -33,7 +33,10 @@ use core_external\external_value;
  * Enqueue a recovery attempt; the worker lock guards against duplicates.
  */
 final class resume_report extends external_api {
+
     /**
+     * execute_parameters
+     *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
@@ -43,8 +46,11 @@ final class resume_report extends external_api {
     }
 
     /**
-     * @param int $reportid Report ID.
-     * @return array
+     * execute
+     *
+     * @param int $reportid
+     * @return true[]
+     * @throws \required_capability_exception
      */
     public static function execute(int $reportid): array {
         $args = self::validate_parameters(self::execute_parameters(), ['reportid' => $reportid]);
@@ -59,6 +65,8 @@ final class resume_report extends external_api {
     }
 
     /**
+     * execute_returns
+     *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {

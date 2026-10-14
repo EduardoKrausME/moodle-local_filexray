@@ -29,7 +29,10 @@ namespace local_filexray\task;
  */
 final class process_course extends \core\task\adhoc_task {
     /**
+     * execute
+     *
      * @return void
+     * @throws \coding_exception
      */
     public function execute(): void {
         $data = $this->get_custom_data();

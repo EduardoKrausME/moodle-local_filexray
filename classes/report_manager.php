@@ -213,7 +213,9 @@ final class report_manager {
     }
 
     /**
-     * @param int $reportid Report ID.
+     * get
+     *
+     * @param int $reportid
      * @return \stdClass
      */
     public static function get(int $reportid): \stdClass {
@@ -222,9 +224,11 @@ final class report_manager {
     }
 
     /**
-     * @param int $reportid Report ID.
-     * @param int $offset Offset.
-     * @param int $limit Page size.
+     * status
+     *
+     * @param int $reportid
+     * @param int $offset
+     * @param int $limit
      * @return array
      */
     public static function status(int $reportid, int $offset, int $limit): array {

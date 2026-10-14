@@ -35,6 +35,8 @@ use core_external\external_value;
  */
 final class report_status extends external_api {
     /**
+     * execute_parameters
+     *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
@@ -46,10 +48,13 @@ final class report_status extends external_api {
     }
 
     /**
-     * @param int $reportid Report ID.
-     * @param int $offset Offset.
-     * @param int $limit Page size.
+     * execute
+     *
+     * @param int $reportid
+     * @param int $offset
+     * @param int $limit
      * @return array
+     * @throws \required_capability_exception
      */
     public static function execute(int $reportid, int $offset = 0, int $limit = 50): array {
         $args = self::validate_parameters(self::execute_parameters(),
@@ -62,6 +67,8 @@ final class report_status extends external_api {
     }
 
     /**
+     * execute_returns
+     *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {
