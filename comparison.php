@@ -71,6 +71,34 @@ foreach ($courses as &$course) {
 unset($course);
 $areas = \local_filexray\comparison_summary::fileareas($id);
 
+// Each classified area links to its local, language-aware, read-only guide.
+// Use the general overview for less common areas without a dedicated page.
+$doclanguage = strpos(current_language(), 'pt') === 0 ? 'pt_br' : 'en';
+$guides = [
+    'user/draft' => 'user-draft',
+    'user/backup' => 'user-backup',
+    'user/icon' => 'user-icon',
+    'user/private' => 'user-private',
+    'user/profile' => 'user-profile',
+    'core_h5p/*' => 'core-h5p',
+    'theme_*/*' => 'themes',
+    'core_admin/*' => 'core-admin',
+    'core/preview' => 'core-preview',
+    'mod_folder/content' => 'mod-folder',
+    'tool_recyclebin/recyclebin_course' => 'recycle-bin',
+    'format_tiles/tilephoto' => 'format-tiles',
+    'assignfeedback_editpdf/stamps' => 'editpdf-stamps',
+    'badges/badgeimage' => 'badges',
+    'backup/*' => 'backup',
+];
+foreach ($areas as &$area) {
+    $key = $area['component'] . '/' . ($area['iscomponent'] ? '*' : $area['filearea']);
+    $guide = $guides[$key] ?? 'areas';
+    $area['docurl'] = (new moodle_url('/local/filexray/docs/' . $doclanguage .
+        '/recursos/' . $guide . '.html'))->out(false);
+}
+unset($area);
+
 $limit = 50;
 $rows = $DB->get_records_sql(
     "SELECT f.id, f.filename, f.component, f.filearea, f.filesize, f.contextid

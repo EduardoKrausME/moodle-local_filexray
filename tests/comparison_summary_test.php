@@ -293,6 +293,60 @@ final class comparison_summary_test extends \advanced_testcase {
     }
 
     /**
+     * The listed Moodle file areas belong in the classified summary, not in
+     * the residual table. An unrelated area remains in the residual table.
+     */
+    public function test_documented_file_areas_are_classified(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $storage = get_file_storage();
+        $contextid = \context_system::instance()->id;
+        $fixtures = [
+            ['core_admin', 'logo', true],
+            ['core', 'preview', true],
+            ['mod_folder', 'content', true],
+            ['tool_recyclebin', 'recyclebin_course', true],
+            ['format_tiles', 'tilephoto', true],
+            ['assignfeedback_editpdf', 'stamps', true],
+            ['core', 'unknown', false],
+            ['mod_resource', 'content', false],
+        ];
+        [$classifiedsql, $params] = comparison_summary::classified_condition('f');
+        foreach ($fixtures as $i => [$component, $area, $expected]) {
+            $file = $storage->create_file_from_string([
+                'contextid' => $contextid,
+                'component' => $component,
+                'filearea' => $area,
+                'itemid' => $i + 100,
+                'filepath' => '/',
+                'filename' => 'documented-area-' . $i . '.txt',
+            ], 'fixture-' . $i);
+            $count = (int) $DB->count_records_sql(
+                'SELECT COUNT(*) FROM {files} f WHERE f.id = :fileid AND ' . $classifiedsql,
+                ['fileid' => $file->get_id()] + $params
+            );
+            $this->assertSame($expected ? 1 : 0, $count, $component . '/' . $area);
+        }
+        $reportid = report_manager::create((int) get_admin()->id);
+        $summaries = comparison_summary::fileareas($reportid);
+        foreach ($fixtures as [$component, $area, $expected]) {
+            if (!$expected) {
+                continue;
+            }
+            $found = false;
+            foreach ($summaries as $summary) {
+                if ($summary['component'] === $component && $summary['filearea'] === $area) {
+                    $found = true;
+                    break;
+                }
+            }
+            $this->assertTrue($found, $component . '/' . $area);
+        }
+    }
+
+    /**
      * The same SQL classification used by both tables leaves unrelated
      * course files in the residual unmatched listing.
      */

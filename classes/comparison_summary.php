@@ -86,13 +86,30 @@ final class comparison_summary {
     public static function classified_condition(string $alias): array {
         global $DB;
 
-        $condition = "({$alias}.component IN (:otheruser, :otherbadges, :otherbackup, :otherh5p)
+        $condition = "({$alias}.component IN (:otheruser, :otherbadges, :otherbackup,
+                 :otherh5p, :otheradmin)
+             OR ({$alias}.component = :othercore AND {$alias}.filearea = :otherpreview)
+             OR ({$alias}.component = :otherfolder AND {$alias}.filearea = :othercontent)
+             OR ({$alias}.component = :otherrecycle AND {$alias}.filearea = :otherrecyclearea)
+             OR ({$alias}.component = :othertiles AND {$alias}.filearea = :othertilephoto)
+             OR ({$alias}.component = :othereditpdf AND {$alias}.filearea = :otherstamps)
              OR " . $DB->sql_substr($alias . '.component', 1, 6) . ' = :othertheme)';
         return [$condition, [
             'otheruser' => 'user',
             'otherbadges' => 'badges',
             'otherbackup' => 'backup',
             'otherh5p' => 'core_h5p',
+            'otheradmin' => 'core_admin',
+            'othercore' => 'core',
+            'otherpreview' => 'preview',
+            'otherfolder' => 'mod_folder',
+            'othercontent' => 'content',
+            'otherrecycle' => 'tool_recyclebin',
+            'otherrecyclearea' => 'recyclebin_course',
+            'othertiles' => 'format_tiles',
+            'othertilephoto' => 'tilephoto',
+            'othereditpdf' => 'assignfeedback_editpdf',
+            'otherstamps' => 'stamps',
             'othertheme' => 'theme_',
         ]];
     }

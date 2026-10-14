@@ -1,0 +1,28 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="O Moodle cria arquivos de prévia, como miniaturas de imagens e documentos, na área core/preview. São resultados gerados para facilitar a navegação e visualização e não os documentos de origem."><title>Prévias e miniaturas de arquivos · File X-Ray</title><link rel="canonical" href="https://eduardokrausme.github.io/moodle-local_filexray/pt_br/recursos/core-preview.html"><link rel="icon" href="../../favicon.svg"><script src="../../theme-init.js"></script><link rel="stylesheet" href="../../styles.css"></head><body><a class="skip" href="#conteudo">Ir para o conteúdo</a><header class="site-header"><div class="shell header-inner"><a class="brand" href="../index.html"><span class="brand-mark">X</span><span>File <strong>X-Ray</strong></span></a><nav aria-label="Navigation"><a href="../index.html#recursos">Recursos</a><a href="../index.html#processo">Como funciona</a><a href="../index.html#relatorios">Relatórios</a><a href="../index.html#seguranca">Segurança</a></nav><div class="header-actions"><a class="button small primary" href="https://github.com/EduardoKrausME/moodle-local_filexray" target="_blank" rel="noopener noreferrer">GitHub ↗</a><button class="menu-button" aria-label="Menu" aria-expanded="false">☰</button></div></div></header><main id="conteudo"><section class="detail-hero"><div class="shell"><a class="back" href="areas.html">← Fontes e documentação</a><span class="eyebrow" style="display:flex;margin-top:32px">Guia de armazenamento</span><h1>Prévias e miniaturas de arquivos</h1><p>O Moodle cria arquivos de prévia, como miniaturas de imagens e documentos, na área core/preview. São resultados gerados para facilitar a navegação e visualização e não os documentos de origem.</p></div></section><div class="shell detail-layout"><article class="prose">
+<section><h2>O que são esses arquivos</h2><p><code>core / preview</code> — O Moodle cria arquivos de prévia, como miniaturas de imagens e documentos, na área core/preview. São resultados gerados para facilitar a navegação e visualização e não os documentos de origem.</p><p>A identidade de um arquivo no Moodle também depende de contextid, itemid, filepath e filename. A mesma área pode conter arquivos de usuários ou instâncias diferentes.</p></section>
+<section><h2>SQL de somente leitura</h2><div class="detail-callout">Os exemplos usam o prefixo mdl_. Troque-o pelo prefixo real da sua instalação. Não execute DELETE, TRUNCATE ou modificações diretas em mdl_files. Diretórios com filename = '.' não entram na contagem de arquivos.</div><h3>Consulta de totais</h3><pre class="connection-code"><code>SELECT f.component, f.filearea,
+       COUNT(*) AS registros,
+       COALESCE(SUM(f.filesize), 0) AS bytes_logicos
+  FROM mdl_files f
+ WHERE f.component = 'core' AND f.filearea = 'preview' AND f.filename &lt;&gt; '.'
+ GROUP BY f.component, f.filearea
+ ORDER BY bytes_logicos DESC;</code></pre><h3>Arquivos maiores para investigação</h3><pre class="connection-code"><code>SELECT f.id, f.contextid, f.itemid, f.filepath, f.filename,
+       f.filesize, f.contenthash, f.timemodified
+  FROM mdl_files f
+ WHERE f.component = 'core' AND f.filearea = 'preview' AND f.filename &lt;&gt; '.'
+ ORDER BY f.filesize DESC
+ LIMIT 25;</code></pre><h3>Fora do inventário de um relatório</h3><p>Substitua o número 5 pelo ID do relatório do File X-Ray. O resultado mostra ausência da seleção dos backups dos cursos, não ausência de uso.</p><pre class="connection-code"><code>SELECT f.component, f.filearea,
+       COUNT(*) AS fora_do_inventario,
+       COALESCE(SUM(f.filesize), 0) AS bytes_fora
+  FROM mdl_files f
+ WHERE f.component = 'core' AND f.filearea = 'preview' AND f.filename &lt;&gt; '.'
+   AND NOT EXISTS (
+       SELECT 1
+         FROM mdl_local_filexray_file fx
+        WHERE fx.reportid = 5 AND fx.fileid = f.id
+   )
+ GROUP BY f.component, f.filearea
+ ORDER BY bytes_fora DESC;</code></pre></section>
+<section><h2>O que verificar antes de qualquer limpeza</h2><p>Investigue caminhos e nomes antes de qualquer manutenção. Mesmo sendo conteúdo derivado, excluí-lo diretamente por SQL ignora a lógica de armazenamento e cache do Moodle.</p><p>Outras áreas de arquivos no File X-Ray</p></section>
+<section><h2>Documentation</h2><ul><li><a class="text-link" href="https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/lib/filestorage/file_storage.php" target="_blank" rel="noopener noreferrer">File storage source ↗</a></li><li><a class="text-link" href="https://moodledev.io/docs/5.2/apis/subsystems/files/internals" target="_blank" rel="noopener noreferrer">File API internals ↗</a></li></ul></section><p><a class="text-link" href="areas.html">← Fontes e documentação</a></p></article>
+<aside class="detail-aside"><h3>Voltar ao índice de áreas</h3><div class="item"><b>Componente</b><span>core</span></div><div class="item"><b>filearea</b><span>preview</span></div><div class="item"><b>Visão</b><span>Diagnóstico sem exclusão</span></div><div class="item"><b>SQL</b><span>3 SELECT</span></div></aside></div></main><footer><div class="shell footer-main"><a class="brand" href="../index.html"><span class="brand-mark">X</span><span>File <strong>X-Ray</strong></span></a><p>Inventário seguro de arquivos do Moodle.</p><div><a href="../privacy.html">Privacidade</a><a href="https://github.com/EduardoKrausME/moodle-local_filexray" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div><div class="shell footer-bottom"><span>© 2026 Eduardo Kraus · File X-Ray</span><span>Moodle™ · Projeto independente.</span></div></footer><script src="../../script.js"></script></body></html>

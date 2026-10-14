@@ -54,7 +54,14 @@
             {{#areas}}
                 <tr>
                     <td>{{#iscomponent}}<strong>{{name}}</strong>{{/iscomponent}}{{^iscomponent}}{{name}}{{/iscomponent}}</td>
-                    <td>{{description}}</td>
+                    <td>
+                        {{description}}
+                        <div class="small mt-1">
+                            <a href="{{{docurl}}}" target="_blank" rel="noopener noreferrer">
+                                <strong>{{#str}}areadoclink, local_filexray{{/str}}</strong> ↗
+                            </a>
+                        </div>
+                    </td>
                     <td><code>{{component}}</code></td>
                     <td><code>{{filearea}}</code></td>
                     <td>{{allcount}}</td>
