@@ -59,7 +59,11 @@ final class runner {
             return;
         }
         try {
-            $report = report_manager::get($reportid);
+            // An already queued cron task may run after the administrator deleted its report.
+            $report = $DB->get_record('local_filexray_report', ['id' => $reportid]);
+            if (!$report) {
+                return;
+            }
 
             // A task can be terminated by a process crash without recording a failure.
             // Only the worker holding this exclusive lock can reclaim an old attempt.

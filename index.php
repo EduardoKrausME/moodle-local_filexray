@@ -42,6 +42,7 @@ foreach ($recent as $r) {
         'id' => $r->id, 'status' => get_string($r->status, 'local_filexray'),
         'totalcourses' => $r->totalcourses, 'created' => userdate($r->timecreated),
         'url' => (new moodle_url('/local/filexray/report.php', ['id' => $r->id]))->out(false),
+        'candelete' => has_capability('local/filexray:run', $context),
     ];
 }
 

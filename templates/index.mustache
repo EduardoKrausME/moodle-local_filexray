@@ -1,4 +1,7 @@
-<div class="local-filexray-index" data-region="filexray-index" data-report-url="{{reportbaseurl}}">
+<div class="local-filexray-index" data-region="filexray-index" data-report-url="{{{reportbaseurl}}}"
+    data-delete-title="{{#str}}deletereport, local_filexray{{/str}}"
+    data-delete-body="{{#str}}deletereportconfirm, local_filexray{{/str}}"
+    data-delete-label="{{#str}}deletereport, local_filexray{{/str}}">
     <p>{{#str}}notbackup, local_filexray{{/str}}</p>
     <p>{{#str}}croninfo, local_filexray{{/str}}</p>
     <p><strong>{{#str}}coursecount, local_filexray{{/str}}</strong> {{courses}}</p>
@@ -17,6 +20,7 @@
                     <th scope="col">{{#str}}courses, local_filexray{{/str}}</th>
                     <th scope="col">{{#str}}created, local_filexray{{/str}}</th>
                     <th scope="col">{{#str}}view, local_filexray{{/str}}</th>
+                    {{#canrun}}<th scope="col">{{#str}}deletereport, local_filexray{{/str}}</th>{{/canrun}}
                 </tr>
             </thead>
             <tbody>
@@ -27,6 +31,14 @@
                         <td>{{totalcourses}}</td>
                         <td>{{created}}</td>
                         <td><a href="{{{url}}}">{{#str}}view, local_filexray{{/str}}</a></td>
+                        {{#candelete}}
+                            <td>
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                    data-action="delete-report" data-reportid="{{id}}">
+                                    {{#str}}deletereport, local_filexray{{/str}}
+                                </button>
+                            </td>
+                        {{/candelete}}
                     </tr>
                 {{/reports}}
             </tbody>

@@ -5,7 +5,8 @@
  * @copyright  2026 Eduardo Kraus
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
+define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/modal_events'],
+    function(Ajax, Notification, ModalDeleteCancel, ModalEvents) {
     'use strict';
 
     var invoke = function(name, args) {
@@ -32,6 +33,33 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         if (!button) {
             return;
         }
+        // Use a Moodle modal instead of the browser's confirm/alert dialogs.
+        var modalClass = ModalDeleteCancel.default || ModalDeleteCancel;
+        var events = ModalEvents.default || ModalEvents;
+        container.addEventListener('click', function(e) {
+            var trigger = e.target.closest('[data-action="delete-report"]');
+            if (!trigger || !container.contains(trigger)) {
+                return;
+            }
+            var reportid = Number(trigger.dataset.reportid);
+            modalClass.create({
+                title: container.dataset.deleteTitle + ' #' + reportid,
+                body: container.dataset.deleteBody,
+            }).then(function(modal) {
+                modal.setDeleteButtonText(container.dataset.deleteLabel);
+                modal.getRoot().on(events.delete, function() {
+                    trigger.disabled = true;
+                    invoke('delete_report', {reportid: reportid}).then(function() {
+                        window.location.reload();
+                    }).catch(function(error) {
+                        trigger.disabled = false;
+                        Notification.exception(error);
+                    });
+                });
+                modal.show();
+                return modal;
+            }).catch(Notification.exception);
+        });
         button.addEventListener('click', function() {
             button.disabled = true;
             invoke('create_report', {}).then(function(result) {

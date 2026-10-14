@@ -39,40 +39,122 @@ final class report_manager {
     public static function create(int $userid): int {
         global $DB;
 
-        $transaction = $DB->start_delegated_transaction();
-        $now = time();
-        $report = (object) [
-            'userid' => $userid, 'status' => 'queued',
-            'totalcourses' => 0, 'timecreated' => $now,
-            'timestarted' => 0, 'timefinished' => 0, 'timemodified' => $now,
-        ];
-        $id = (int) $DB->insert_record('local_filexray_report', $report);
-        $count = 0;
-        $rs = $DB->get_recordset_select('course', 'id <> :siteid',
-            ['siteid' => SITEID], 'id ASC', 'id, fullname');
+        $lock = self::acquire_reports_lock();
+        $reportlocks = [];
         try {
-            foreach ($rs as $course) {
-                $DB->insert_record('local_filexray_course', (object) [
-                    'reportid' => $id, 'courseid' => $course->id,
-                    'coursename' => self::plain_course_name($course), 'status' => 'pending',
-                    'filecount' => 0, 'timestarted' => 0,
-                    'timefinished' => 0, 'errormessage' => null,
-                ], false);
-                $count++;
+            $transaction = $DB->start_delegated_transaction();
+            $configured = get_config('local_filexray', 'maxreports');
+            $maxreports = max(1, is_numeric($configured) ? (int) $configured : 10);
+            $countreports = $DB->count_records('local_filexray_report');
+            // Remove the oldest report before storing a new one.
+            while ($countreports >= $maxreports) {
+                $oldest = $DB->get_records('local_filexray_report', [], 'timecreated ASC, id ASC', 'id', 0, 1);
+                if (!$oldest) {
+                    break;
+                }
+                $old = reset($oldest);
+                self::delete_locked((int) $old->id, $reportlocks);
+                $countreports--;
             }
+            $now = time();
+            $report = (object) [
+                'userid' => $userid, 'status' => 'queued',
+                'totalcourses' => 0, 'timecreated' => $now,
+                'timestarted' => 0, 'timefinished' => 0, 'timemodified' => $now,
+            ];
+            $id = (int) $DB->insert_record('local_filexray_report', $report);
+            $count = 0;
+            $rs = $DB->get_recordset_select('course', 'id <> :siteid',
+                ['siteid' => SITEID], 'id ASC', 'id, fullname');
+            try {
+                foreach ($rs as $course) {
+                    $DB->insert_record('local_filexray_course', (object) [
+                        'reportid' => $id, 'courseid' => $course->id,
+                        'coursename' => self::plain_course_name($course), 'status' => 'pending',
+                        'filecount' => 0, 'timestarted' => 0,
+                        'timefinished' => 0, 'errormessage' => null,
+                    ], false);
+                    $count++;
+                }
+            } finally {
+                $rs->close();
+            }
+            $DB->update_record('local_filexray_report', (object) [
+                'id' => $id, 'totalcourses' => $count,
+                'status' => $count ? 'queued' : 'completed',
+                'timefinished' => $count ? 0 : $now,
+            ]);
+            $transaction->allow_commit();
+            if ($count) {
+                runner::enqueue($id);
+            }
+            return $id;
         } finally {
-            $rs->close();
+            foreach ($reportlocks as $reportlock) {
+                $reportlock->release();
+            }
+            $lock->release();
         }
-        $DB->update_record('local_filexray_report', (object) [
-            'id' => $id, 'totalcourses' => $count,
-            'status' => $count ? 'queued' : 'completed',
-            'timefinished' => $count ? 0 : $now,
-        ]);
-        $transaction->allow_commit();
-        if ($count) {
-            runner::enqueue($id);
+    }
+
+    /**
+     * Acquire a shared administrative lock to serialize report creation and deletion.
+     *
+     * @return \core\lock\lock
+     */
+    private static function acquire_reports_lock(): \core\lock\lock {
+        $lock = \core\lock\lock_config::get_lock_factory('local_filexray')->get_lock('reports_admin', 10);
+        if (!$lock) {
+            throw new \moodle_exception('reportsbusy', 'local_filexray');
         }
-        return $id;
+        return $lock;
+    }
+
+    /**
+     * Delete one report and its inventory, while holding the administrative lock.
+     *
+     * @param int $reportid Report ID.
+     * @param array $reportlocks Locks held until the outer transaction commits.
+     * @return void
+     */
+    private static function delete_locked(int $reportid, array &$reportlocks): void {
+        global $DB;
+
+        $lock = \core\lock\lock_config::get_lock_factory('local_filexray')->get_lock('report_' . $reportid, 0);
+        if (!$lock) {
+            throw new \moodle_exception('reportbusy', 'local_filexray');
+        }
+        $reportlocks[] = $lock;
+        if (!$DB->record_exists('local_filexray_report', ['id' => $reportid])) {
+                throw new \moodle_exception('notfound', 'local_filexray');
+            }
+            // Never delete Moodle's files or the physical filedir content.
+            $DB->delete_records('local_filexray_file', ['reportid' => $reportid]);
+            $DB->delete_records('local_filexray_course', ['reportid' => $reportid]);
+            $DB->delete_records('local_filexray_report', ['id' => $reportid]);
+    }
+
+    /**
+     * Explicitly delete a report and all of its own inventory data.
+     *
+     * @param int $reportid Report ID.
+     * @return void
+     */
+    public static function delete(int $reportid): void {
+        global $DB;
+
+        $lock = self::acquire_reports_lock();
+        $reportlocks = [];
+        try {
+            $transaction = $DB->start_delegated_transaction();
+            self::delete_locked($reportid, $reportlocks);
+            $transaction->allow_commit();
+        } finally {
+            foreach ($reportlocks as $reportlock) {
+                $reportlock->release();
+            }
+            $lock->release();
+        }
     }
 
     /**

@@ -76,4 +76,62 @@ final class report_manager_test extends \advanced_testcase {
         $this->assertEmpty($updated->errormessage);
         $this->assertSame(0, report_manager::retry_failed($reportid));
     }
+    /**
+     * Deleting a report removes only File X-Ray inventory records.
+     */
+    public function test_delete_report_removes_its_rows_without_touching_moodle_files(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $course = $this->getDataGenerator()->create_course();
+        $reportid = report_manager::create((int) get_admin()->id);
+        $row = $DB->get_record('local_filexray_course',
+            ['reportid' => $reportid, 'courseid' => $course->id], '*', MUST_EXIST);
+
+        $DB->insert_record('local_filexray_file', (object) [
+            'reportid' => $reportid,
+            'reportcourseid' => $row->id,
+            'courseid' => $course->id,
+            'fileid' => 123456789,
+            'contenthash' => str_repeat('a', 40),
+            'filesize' => 100,
+            'contextid' => \context_course::instance($course->id)->id,
+            'component' => 'mod_resource',
+            'filearea' => 'content',
+            'filename' => 'sample.pdf',
+        ]);
+        $filesbefore = $DB->count_records('files');
+
+        report_manager::delete($reportid);
+
+        $this->assertFalse($DB->record_exists('local_filexray_report', ['id' => $reportid]));
+        $this->assertEquals(0, $DB->count_records('local_filexray_course', ['reportid' => $reportid]));
+        $this->assertEquals(0, $DB->count_records('local_filexray_file', ['reportid' => $reportid]));
+        $this->assertEquals($filesbefore, $DB->count_records('files'));
+    }
+
+    /**
+     * Creating a new report at the retention limit evicts only the oldest.
+     */
+    public function test_create_report_respects_maximum_retention(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $this->getDataGenerator()->create_course();
+        set_config('maxreports', 2, 'local_filexray');
+
+        $first = report_manager::create((int) get_admin()->id);
+        $second = report_manager::create((int) get_admin()->id);
+        $third = report_manager::create((int) get_admin()->id);
+
+        $this->assertEquals(2, $DB->count_records('local_filexray_report'));
+        $this->assertFalse($DB->record_exists('local_filexray_report', ['id' => $first]));
+        $this->assertTrue($DB->record_exists('local_filexray_report', ['id' => $second]));
+        $this->assertTrue($DB->record_exists('local_filexray_report', ['id' => $third]));
+        $this->assertEquals(0, $DB->count_records('local_filexray_course', ['reportid' => $first]));
+        $this->assertEquals(0, $DB->count_records('local_filexray_file', ['reportid' => $first]));
+    }
+
 }

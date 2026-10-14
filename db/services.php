@@ -33,6 +33,14 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/filexray:run',
     ],
+    'local_filexray_delete_report' => [
+        'classname' => 'local_filexray\\external\\delete_report',
+        'methodname' => 'execute',
+        'description' => 'Delete a File X-Ray report and its associated inventory records.',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/filexray:run',
+    ],
     'local_filexray_report_status' => [
         'classname' => 'local_filexray\\external\\report_status',
         'methodname' => 'execute',
