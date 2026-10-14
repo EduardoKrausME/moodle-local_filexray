@@ -24,7 +24,9 @@
 
 namespace local_filexray;
 
+use core\lock\lock_config;
 use core\task\manager;
+use core_text;
 use local_filexray\task\process_course;
 use Throwable;
 
@@ -53,7 +55,7 @@ final class runner {
     public static function one(int $reportid): void {
         global $DB;
 
-        $factory = \core\lock\lock_config::get_lock_factory('local_filexray');
+        $factory = lock_config::get_lock_factory('local_filexray');
         $lock = $factory->get_lock('report_' . $reportid, 0);
         if (!$lock) {
             return;
@@ -111,7 +113,7 @@ final class runner {
                 $DB->update_record('local_filexray_course', (object) [
                     'id' => $row->id, 'status' => 'failed',
                     'filecount' => 0, 'timefinished' => time(),
-                    'errormessage' => \core_text::substr($e->getMessage(), 0, 2000),
+                    'errormessage' => core_text::substr($e->getMessage(), 0, 2000),
                 ]);
                 debugging('File X-Ray inventory failed for course ' . $row->courseid . ': ' .
                     $e->getMessage(), DEBUG_DEVELOPER);

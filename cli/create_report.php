@@ -22,6 +22,8 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_filexray\report_manager;
+
 define('CLI_SCRIPT', true);
 
 require_once(__DIR__ . '/../../../config.php');
@@ -31,5 +33,5 @@ $admin = get_admin();
 if (!$admin) {
     cli_error('A site administrator account is required.');
 }
-$reportid = \local_filexray\report_manager::create((int) $admin->id);
+$reportid = report_manager::create((int) $admin->id);
 cli_writeln('File X-Ray report #' . $reportid . ' has been queued.');

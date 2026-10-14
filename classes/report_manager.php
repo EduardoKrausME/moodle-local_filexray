@@ -24,6 +24,13 @@
 
 namespace local_filexray;
 
+use context_course;
+use core\lock\lock;
+use core\lock\lock_config;
+use moodle_exception;
+use stdClass;
+use Throwable;
+
 /**
  * Persistent report snapshot and AJAX progress.
  */
@@ -84,7 +91,7 @@ final class report_manager {
                     'timefinished' => $count ? 0 : $now,
                 ]);
                 $transaction->allow_commit();
-            } catch (\Throwable $error) {
+            } catch (Throwable $error) {
                 $transaction->rollback($error);
             }
             if ($count) {
@@ -102,12 +109,12 @@ final class report_manager {
     /**
      * Acquire a shared administrative lock to serialize report creation and deletion.
      *
-     * @return \core\lock\lock
+     * @return lock
      */
-    private static function acquire_reports_lock(): \core\lock\lock {
-        $lock = \core\lock\lock_config::get_lock_factory('local_filexray')->get_lock('reports_admin', 10);
+    private static function acquire_reports_lock(): lock {
+        $lock = lock_config::get_lock_factory('local_filexray')->get_lock('reports_admin', 10);
         if (!$lock) {
-            throw new \moodle_exception('reportsbusy', 'local_filexray');
+            throw new moodle_exception('reportsbusy', 'local_filexray');
         }
         return $lock;
     }
@@ -122,13 +129,13 @@ final class report_manager {
     private static function delete_locked(int $reportid, array &$reportlocks): void {
         global $DB;
 
-        $lock = \core\lock\lock_config::get_lock_factory('local_filexray')->get_lock('report_' . $reportid, 0);
+        $lock = lock_config::get_lock_factory('local_filexray')->get_lock('report_' . $reportid, 0);
         if (!$lock) {
-            throw new \moodle_exception('reportbusy', 'local_filexray');
+            throw new moodle_exception('reportbusy', 'local_filexray');
         }
         $reportlocks[] = $lock;
         if (!$DB->record_exists('local_filexray_report', ['id' => $reportid])) {
-            throw new \moodle_exception('notfound', 'local_filexray');
+            throw new moodle_exception('notfound', 'local_filexray');
         }
         // Never delete Moodle's files or the physical filedir content.
         $DB->delete_records('local_filexray_file', ['reportid' => $reportid]);
@@ -152,7 +159,7 @@ final class report_manager {
             try {
                 self::delete_locked($reportid, $reportlocks);
                 $transaction->allow_commit();
-            } catch (\Throwable $error) {
+            } catch (Throwable $error) {
                 $transaction->rollback($error);
             }
         } finally {
@@ -166,12 +173,12 @@ final class report_manager {
     /**
      * Resolve multilang course names and remove any HTML before storing the report snapshot.
      *
-     * @param \stdClass $course Course record with id and fullname.
+     * @param stdClass $course Course record with id and fullname.
      * @return string Plain-text course name.
      */
-    private static function plain_course_name(\stdClass $course): string {
+    private static function plain_course_name(stdClass $course): string {
         $formatted = format_string($course->fullname, true, [
-            'context' => \context_course::instance($course->id),
+            'context' => context_course::instance($course->id),
         ]);
         // Decode entities before stripping so encoded markup cannot survive.
         $plain = strip_tags(html_entity_decode($formatted, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
@@ -216,9 +223,9 @@ final class report_manager {
      * get
      *
      * @param int $reportid
-     * @return \stdClass
+     * @return stdClass
      */
-    public static function get(int $reportid): \stdClass {
+    public static function get(int $reportid): stdClass {
         global $DB;
         return $DB->get_record('local_filexray_report', ['id' => $reportid], '*', MUST_EXIST);
     }

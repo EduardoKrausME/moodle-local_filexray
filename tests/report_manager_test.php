@@ -24,12 +24,15 @@
 
 namespace local_filexray;
 
+use advanced_testcase;
+use context_course;
+
 /**
  * File X-Ray report creation tests.
  *
  * @covers \local_filexray\report_manager
  */
-final class report_manager_test extends \advanced_testcase {
+final class report_manager_test extends advanced_testcase {
     /**
      * Course full names with multilang markup must be stored as plain text.
      */
@@ -94,7 +97,7 @@ final class report_manager_test extends \advanced_testcase {
             'fileid' => 123456789,
             'contenthash' => str_repeat('a', 40),
             'filesize' => 100,
-            'contextid' => \context_course::instance($course->id)->id,
+            'contextid' => context_course::instance($course->id)->id,
             'component' => 'mod_resource',
             'filearea' => 'content',
             'filename' => 'sample.pdf',

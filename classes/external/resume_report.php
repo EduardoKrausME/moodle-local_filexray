@@ -24,10 +24,14 @@
 
 namespace local_filexray\external;
 
+use context_system;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
+use local_filexray\report_manager;
+use local_filexray\runner;
+use required_capability_exception;
 
 /**
  * Enqueue a recovery attempt; the worker lock guards against duplicates.
@@ -50,17 +54,17 @@ final class resume_report extends external_api {
      *
      * @param int $reportid
      * @return true[]
-     * @throws \required_capability_exception
+     * @throws required_capability_exception
      */
     public static function execute(int $reportid): array {
         $args = self::validate_parameters(self::execute_parameters(), ['reportid' => $reportid]);
-        $context = \context_system::instance();
+        $context = context_system::instance();
         self::validate_context($context);
         require_capability('local/filexray:run', $context);
         // Failed rows are terminal until an administrator requests a retry.
         // Preserve the report ID, so the existing progress page can continue.
-        \local_filexray\report_manager::retry_failed((int) $args['reportid']);
-        \local_filexray\runner::enqueue((int) $args['reportid']);
+        report_manager::retry_failed((int) $args['reportid']);
+        runner::enqueue((int) $args['reportid']);
         return ['success' => true];
     }
 

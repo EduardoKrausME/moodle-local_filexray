@@ -24,12 +24,14 @@
 
 namespace local_filexray;
 
+use advanced_testcase;
+
 /**
  * Verify documentation URLs and component labels.
  *
  * @covers \local_filexray\file_area_guide
  */
-final class file_area_guide_test extends \advanced_testcase {
+final class file_area_guide_test extends advanced_testcase {
     /**
      * Known file areas use the matching guide on the documentation site.
      */

@@ -24,12 +24,17 @@
 
 namespace local_filexray;
 
+use advanced_testcase;
+use context_course;
+use context_system;
+use context_user;
+
 /**
  * Verify file counts and file-area attribution.
  *
  * @covers \local_filexray\comparison_summary
  */
-final class comparison_summary_test extends \advanced_testcase {
+final class comparison_summary_test extends advanced_testcase {
     /**
      * The course view sums only inventoried non-directory records.
      */
@@ -55,7 +60,7 @@ final class comparison_summary_test extends \advanced_testcase {
                 'fileid' => $file['fileid'],
                 'contenthash' => str_repeat('a', 40),
                 'filesize' => $file['filesize'],
-                'contextid' => \context_course::instance($course->id)->id,
+                'contextid' => context_course::instance($course->id)->id,
                 'component' => 'mod_resource',
                 'filearea' => 'content',
                 'filename' => $file['filename'],
@@ -135,7 +140,7 @@ final class comparison_summary_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
         $storage = get_file_storage();
-        $contextid = \context_system::instance()->id;
+        $contextid = context_system::instance()->id;
         $files = [];
         foreach (['user', 'mod_resource'] as $i => $component) {
             $files[$component] = $storage->create_file_from_string([
@@ -170,7 +175,7 @@ final class comparison_summary_test extends \advanced_testcase {
         $user = $this->getDataGenerator()->create_user();
         $storage = get_file_storage();
         $storage->create_file_from_string([
-            'contextid' => \context_user::instance($user->id)->id,
+            'contextid' => context_user::instance($user->id)->id,
             'component' => 'user',
             'filearea' => 'draft',
             'itemid' => 1,
@@ -227,8 +232,8 @@ final class comparison_summary_test extends \advanced_testcase {
         $job = $DB->get_record('local_filexray_course', [
             'reportid' => $reportid, 'courseid' => $course->id,
         ], '*', MUST_EXIST);
-        $usercontext = \context_user::instance($user->id)->id;
-        $systemcontext = \context_system::instance()->id;
+        $usercontext = context_user::instance($user->id)->id;
+        $systemcontext = context_system::instance()->id;
         $storage = get_file_storage();
         $fixtures = [
             ['user', 'draft', $usercontext],
@@ -320,7 +325,7 @@ final class comparison_summary_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
         $storage = get_file_storage();
-        $systemcontext = \context_system::instance()->id;
+        $systemcontext = context_system::instance()->id;
         $fileareas = ['javascript', 'css', 'icons', 'images', 'content', 'fonts'];
         $themebytes = 0;
         foreach ($fileareas as $i => $filearea) {
@@ -385,7 +390,7 @@ final class comparison_summary_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
         $storage = get_file_storage();
-        $contextid = \context_system::instance()->id;
+        $contextid = context_system::instance()->id;
         $fixtures = [
             ['core_admin', 'logo', true],
             ['core', 'preview', true],
@@ -439,7 +444,7 @@ final class comparison_summary_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
         $storage = get_file_storage();
-        $context = \context_system::instance()->id;
+        $context = context_system::instance()->id;
         $files = [];
         foreach (['user', 'core_h5p', 'theme_learnlingo', 'mod_resource'] as $i => $component) {
             $area = $component === 'user' ? 'draft' : 'content';

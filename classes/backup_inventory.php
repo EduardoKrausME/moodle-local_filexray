@@ -29,6 +29,7 @@ use backup_controller;
 use backup_controller_dbops;
 use backup_final_task;
 use backup_helper;
+use coding_exception;
 use context_course;
 use Throwable;
 
@@ -64,7 +65,7 @@ final class backup_inventory {
             $backupid = $controller->get_backupid();
             $plan = $controller->get_plan();
             if (!$plan->setting_exists('files') || !$plan->get_setting('files')->get_value()) {
-                throw new \coding_exception('Course backup does not permit file inclusion.');
+                throw new coding_exception('Course backup does not permit file inclusion.');
             }
 
             // The native plugins will select files in their backup tasks. We do not
@@ -97,7 +98,7 @@ final class backup_inventory {
                 break;
             }
             if (!$foundfinal) {
-                throw new \coding_exception('Unexpected native backup step order. Refusing a partial inventory.');
+                throw new coding_exception('Unexpected native backup step order. Refusing a partial inventory.');
             }
 
             // Filefinal is exactly the set selected for files.xml by Moodle.

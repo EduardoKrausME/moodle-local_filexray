@@ -22,6 +22,8 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_filexray\report_manager;
+
 require_once(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT);
@@ -29,7 +31,7 @@ require_login();
 $context = context_system::instance();
 require_capability('local/filexray:view', $context);
 
-$report = \local_filexray\report_manager::get($id);
+$report = report_manager::get($id);
 if (in_array($report->status, ['completed', 'partial'], true)) {
     // Completed reports always open their comparison, including on later visits.
     redirect(new moodle_url('/local/filexray/comparison.php', ['id' => $id]));

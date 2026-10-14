@@ -24,10 +24,13 @@
 
 namespace local_filexray\external;
 
+use context_system;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
+use local_filexray\report_manager;
+use required_capability_exception;
 
 /**
  * Create the report and queue its first course.
@@ -46,15 +49,15 @@ final class create_report extends external_api {
      * execute
      *
      * @return array
-     * @throws \required_capability_exception
+     * @throws required_capability_exception
      */
     public static function execute(): array {
         global $USER;
         self::validate_parameters(self::execute_parameters(), []);
-        $context = \context_system::instance();
+        $context = context_system::instance();
         self::validate_context($context);
         require_capability('local/filexray:run', $context);
-        $id = \local_filexray\report_manager::create((int) $USER->id);
+        $id = report_manager::create((int) $USER->id);
         return ['reportid' => $id];
     }
 

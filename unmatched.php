@@ -22,6 +22,9 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_filexray\comparison_summary;
+use local_filexray\report_manager;
+
 require_once(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT);
@@ -31,13 +34,13 @@ $context = context_system::instance();
 require_capability('local/filexray:view', $context);
 
 // A report must exist, even when the original course no longer exists.
-$report = \local_filexray\report_manager::get($id);
+$report = report_manager::get($id);
 $PAGE->set_url(new moodle_url('/local/filexray/unmatched.php', ['id' => $id, 'page' => $page]));
 $PAGE->set_context($context);
 $PAGE->set_title(get_string('unmatched', 'local_filexray'));
 $PAGE->set_heading(get_string('unmatched', 'local_filexray'));
 
-[$where, $params] = \local_filexray\comparison_summary::unmatched_condition($id);
+[$where, $params] = comparison_summary::unmatched_condition($id);
 $total = (int) $DB->count_records_sql(
     "SELECT COUNT(*) FROM {files} f WHERE " . $where, $params
 );

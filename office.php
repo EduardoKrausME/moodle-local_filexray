@@ -22,6 +22,8 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_filexray\file_preview;
+
 require_once(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT);
@@ -32,8 +34,8 @@ $authorise = optional_param('authorise', 0, PARAM_BOOL);
 require_login();
 $context = context_system::instance();
 require_capability('local/filexray:view', $context);
-$file = \local_filexray\file_preview::resolve($id, $coursejobid, $fileid);
-if (\local_filexray\file_preview::kind($file->get_filename()) !== 'office') {
+$file = file_preview::resolve($id, $coursejobid, $fileid);
+if (file_preview::kind($file->get_filename()) !== 'office') {
     throw new moodle_exception('invalidpreview', 'local_filexray');
 }
 
@@ -60,7 +62,7 @@ if ($authorise) {
     if (!$https) {
         throw new moodle_exception('officehttpsrequired', 'local_filexray');
     }
-    $temporary = \local_filexray\file_preview::office_url($id, $coursejobid, $fileid);
+    $temporary = file_preview::office_url($id, $coursejobid, $fileid);
     $googleurl = new moodle_url('https://docs.google.com/gview', [
         'embedded' => 1,
         'url' => $temporary->out(false),

@@ -22,6 +22,9 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core\session\manager;
+use local_filexray\file_preview;
+
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/filelib.php');
 
@@ -39,13 +42,13 @@ require_capability('local/filexray:view', $context);
 // This route intentionally has no Moodle login. Access is granted only by a
 // short-lived HMAC created after an administrator has confirmed disclosure.
 try {
-    $file = \local_filexray\file_preview::verify_office(
+    $file = file_preview::verify_office(
         $id, $coursejobid, $fileid, $expires, $nonce, $signature
     );
-} catch (\Throwable $exception) {
+} catch (Throwable $exception) {
     send_file_not_found();
 }
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
-\core\session\manager::write_close();
+manager::write_close();
 send_stored_file($file, 0, 0, false, ['cacheability' => 'private']);

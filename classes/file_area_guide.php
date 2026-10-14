@@ -24,6 +24,8 @@
 
 namespace local_filexray;
 
+use core_component;
+
 /**
  * Shared file-area documentation mapping for course and comparison tables.
  */
@@ -86,7 +88,7 @@ final class file_area_guide {
         if (strpos($component, 'mod_') === 0) {
             $module = substr($component, 4);
             // A backup may outlive the plugin that originally created this file.
-            $installed = \core_component::get_plugin_list('mod');
+            $installed = core_component::get_plugin_list('mod');
             if (isset($installed[$module]) &&
                     get_string_manager()->string_exists('modulename', $component)) {
                 return get_string('modulename', $component);

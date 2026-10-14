@@ -24,12 +24,16 @@
 
 namespace local_filexray;
 
+use advanced_testcase;
+use context_course;
+use moodle_exception;
+
 /**
  * Preview classification and short-lived signed file verification.
  *
  * @covers \local_filexray\file_preview
  */
-final class file_preview_test extends \advanced_testcase {
+final class file_preview_test extends advanced_testcase {
     /**
      * Browser-safe files are inline, while scriptable formats must download.
      */
@@ -62,7 +66,7 @@ final class file_preview_test extends \advanced_testcase {
             'reportid' => $reportid, 'courseid' => $course->id,
         ], '*', MUST_EXIST);
         $file = get_file_storage()->create_file_from_string([
-            'contextid' => \context_course::instance($course->id)->id,
+            'contextid' => context_course::instance($course->id)->id,
             'component' => 'mod_resource',
             'filearea' => 'content',
             'itemid' => 42,
@@ -114,13 +118,13 @@ final class file_preview_test extends \advanced_testcase {
                 (int) $params['expires'], $params['nonce'], str_repeat('f', 64)
             );
             $this->fail('Modified HMAC should be rejected.');
-        } catch (\moodle_exception $expected) {
+        } catch (moodle_exception $expected) {
             $this->assertSame('expiredpreview', $expected->errorcode);
         }
 
         $DB->set_field('local_filexray_file', 'contenthash', str_repeat('f', 40),
             ['id' => $snapshotid]);
-        $this->expectException(\moodle_exception::class);
+        $this->expectException(moodle_exception::class);
         file_preview::resolve($reportid, (int) $job->id, (int) $file->get_id());
     }
 }

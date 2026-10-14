@@ -24,10 +24,13 @@
 
 namespace local_filexray\external;
 
+use context_system;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
+use local_filexray\report_manager;
+use required_capability_exception;
 
 /**
  * Remove a report and its associated inventory data.
@@ -51,14 +54,14 @@ final class delete_report extends external_api {
      *
      * @param int $reportid
      * @return true[]
-     * @throws \required_capability_exception
+     * @throws required_capability_exception
      */
     public static function execute(int $reportid): array {
         $args = self::validate_parameters(self::execute_parameters(), ['reportid' => $reportid]);
-        $context = \context_system::instance();
+        $context = context_system::instance();
         self::validate_context($context);
         require_capability('local/filexray:run', $context);
-        \local_filexray\report_manager::delete((int) $args['reportid']);
+        report_manager::delete((int) $args['reportid']);
         return ['success' => true];
     }
 

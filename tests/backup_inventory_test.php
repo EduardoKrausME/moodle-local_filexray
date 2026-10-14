@@ -24,12 +24,15 @@
 
 namespace local_filexray;
 
+use advanced_testcase;
+use context_course;
+
 /**
  * Ensures that saving a native backup controller does not close its logger.
  *
  * @covers \local_filexray\backup_inventory
  */
-final class backup_inventory_test extends \advanced_testcase {
+final class backup_inventory_test extends advanced_testcase {
     /**
      * Course file annotations must be collected without a logger write failure.
      */
@@ -39,7 +42,7 @@ final class backup_inventory_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
         $course = $this->getDataGenerator()->create_course();
-        $context = \context_course::instance($course->id);
+        $context = context_course::instance($course->id);
         $storedfile = get_file_storage()->create_file_from_string([
             'contextid' => $context->id,
             'component' => 'course',

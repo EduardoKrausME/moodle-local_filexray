@@ -22,6 +22,9 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core\session\manager;
+use local_filexray\file_preview;
+
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/filelib.php');
 
@@ -33,8 +36,8 @@ $downloadrequested = optional_param('download', 0, PARAM_BOOL);
 require_login();
 require_capability('local/filexray:view', context_system::instance());
 
-$file = \local_filexray\file_preview::resolve($id, $coursejobid, $fileid);
-$kind = \local_filexray\file_preview::kind($file->get_filename());
+$file = file_preview::resolve($id, $coursejobid, $fileid);
+$kind = file_preview::kind($file->get_filename());
 if ($kind === 'office' && !$downloadrequested) {
     redirect(new moodle_url('/local/filexray/office.php', [
         'id' => $id, 'coursejobid' => $coursejobid, 'fileid' => $fileid,
@@ -44,5 +47,5 @@ if ($kind === 'office' && !$downloadrequested) {
 $download = $kind === 'download' || $downloadrequested || $kind === 'office';
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
-\core\session\manager::write_close();
+manager::write_close();
 send_stored_file($file, 0, 0, $download, ['cacheability' => 'private']);

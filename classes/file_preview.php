@@ -24,6 +24,7 @@
 
 namespace local_filexray;
 
+use moodle_exception;
 use moodle_url;
 use stored_file;
 
@@ -77,7 +78,7 @@ final class file_preview {
             'reportid' => $reportid, 'reportcourseid' => $coursejobid, 'fileid' => $fileid,
         ], 'id, contextid, component, filearea, filename, contenthash', MUST_EXIST);
         if ($snapshot->filename === '.') {
-            throw new \moodle_exception('filenotavailable', 'local_filexray');
+            throw new moodle_exception('filenotavailable', 'local_filexray');
         }
         $file = get_file_storage()->get_file_by_id($fileid);
         if (!$file || $file->is_directory() ||
@@ -86,7 +87,7 @@ final class file_preview {
                 $file->get_filearea() !== $snapshot->filearea ||
                 $file->get_filename() !== $snapshot->filename ||
                 $file->get_contenthash() !== $snapshot->contenthash) {
-            throw new \moodle_exception('filenotavailable', 'local_filexray');
+            throw new moodle_exception('filenotavailable', 'local_filexray');
         }
         return $file;
     }
@@ -103,7 +104,7 @@ final class file_preview {
     public static function office_url(int $reportid, int $coursejobid, int $fileid): moodle_url {
         $file = self::resolve($reportid, $coursejobid, $fileid);
         if (self::kind($file->get_filename()) !== 'office') {
-            throw new \moodle_exception('invalidpreview', 'local_filexray');
+            throw new moodle_exception('invalidpreview', 'local_filexray');
         }
         $expires = time() + self::OFFICE_LIFETIME;
         $nonce = bin2hex(random_bytes(16));
@@ -137,16 +138,16 @@ final class file_preview {
         if ($expires < time() || $expires > time() + self::OFFICE_LIFETIME ||
                 !preg_match('/^[a-f0-9]{32}$/D', $nonce) ||
                 !preg_match('/^[a-f0-9]{64}$/D', $signature)) {
-            throw new \moodle_exception('expiredpreview', 'local_filexray');
+            throw new moodle_exception('expiredpreview', 'local_filexray');
         }
         $file = self::resolve($reportid, $coursejobid, $fileid);
         if (self::kind($file->get_filename()) !== 'office') {
-            throw new \moodle_exception('invalidpreview', 'local_filexray');
+            throw new moodle_exception('invalidpreview', 'local_filexray');
         }
         $expected = self::signature($reportid, $coursejobid, $fileid, $expires, $nonce,
             $file->get_contenthash());
         if (!hash_equals($expected, $signature)) {
-            throw new \moodle_exception('expiredpreview', 'local_filexray');
+            throw new moodle_exception('expiredpreview', 'local_filexray');
         }
         return $file;
     }
@@ -172,7 +173,7 @@ final class file_preview {
     ): string {
         $key = get_config('local_filexray', 'previewsecret');
         if (!is_string($key) || !preg_match('/^[a-f0-9]{64}$/D', $key)) {
-            throw new \moodle_exception('previewnotconfigured', 'local_filexray');
+            throw new moodle_exception('previewnotconfigured', 'local_filexray');
         }
         $data = implode('|', [$reportid, $coursejobid, $fileid, $expires, $nonce, $contenthash]);
         return hash_hmac('sha256', $data, hex2bin($key));

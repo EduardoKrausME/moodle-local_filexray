@@ -24,11 +24,14 @@
 
 namespace local_filexray\external;
 
+use context_system;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
+use local_filexray\report_manager;
+use required_capability_exception;
 
 /**
  * Paginated status for polling; does not execute expensive backup work.
@@ -54,15 +57,15 @@ final class report_status extends external_api {
      * @param int $offset
      * @param int $limit
      * @return array
-     * @throws \required_capability_exception
+     * @throws required_capability_exception
      */
     public static function execute(int $reportid, int $offset = 0, int $limit = 50): array {
         $args = self::validate_parameters(self::execute_parameters(),
             ['reportid' => $reportid, 'offset' => $offset, 'limit' => $limit]);
-        $context = \context_system::instance();
+        $context = context_system::instance();
         self::validate_context($context);
         require_capability('local/filexray:view', $context);
-        return \local_filexray\report_manager::status((int) $args['reportid'],
+        return report_manager::status((int) $args['reportid'],
             max(0, (int) $args['offset']), max(1, min(100, (int) $args['limit'])));
     }
 

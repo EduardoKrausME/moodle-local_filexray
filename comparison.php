@@ -22,6 +22,10 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_filexray\comparison_summary;
+use local_filexray\file_area_guide;
+use local_filexray\report_manager;
+
 require_once(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT);
@@ -30,14 +34,14 @@ require_login();
 $context = context_system::instance();
 require_capability('local/filexray:view', $context);
 
-$report = \local_filexray\report_manager::get($id);
+$report = report_manager::get($id);
 $PAGE->set_url(new moodle_url('/local/filexray/comparison.php', ['id' => $id]));
 $PAGE->set_context($context);
 $PAGE->set_title(get_string('comparison', 'local_filexray'));
 $PAGE->set_heading(get_string('comparison', 'local_filexray'));
 
 // Keep the card count consistent with the dedicated residual-files page.
-[$where, $params] = \local_filexray\comparison_summary::unmatched_condition($id);
+[$where, $params] = comparison_summary::unmatched_condition($id);
 $total = (int) $DB->count_records_select('files', "filename <> :dir", ['dir' => '.']);
 $matched = (int) $DB->count_records_sql(
     "SELECT COUNT(DISTINCT fileid) FROM {local_filexray_file}
@@ -50,7 +54,7 @@ $unmatched = (int) $DB->count_records_sql(
 // Course totals come from the saved backup inventories, not a live course context lookup.
 $coursepagesize = 50;
 $coursecount = $DB->count_records('local_filexray_course', ['reportid' => $id]);
-$courses = \local_filexray\comparison_summary::courses(
+$courses = comparison_summary::courses(
     $id, $coursepage * $coursepagesize, $coursepagesize
 );
 foreach ($courses as &$course) {
@@ -59,12 +63,12 @@ foreach ($courses as &$course) {
     ]))->out(false);
 }
 unset($course);
-$areas = \local_filexray\comparison_summary::fileareas($id);
+$areas = comparison_summary::fileareas($id);
 
 // Each classified area links to its local, language-aware, read-only guide.
 // Use the general overview for less common areas without a dedicated page.
 foreach ($areas as &$area) {
-    $area['docurl'] = \local_filexray\file_area_guide::documentation_url(
+    $area['docurl'] = file_area_guide::documentation_url(
         $area['component'], $area['filearea'], true
     );
 }
