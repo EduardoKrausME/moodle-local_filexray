@@ -25,6 +25,18 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['administration'] = 'Administração do File X-Ray';
+$string['areaavatar'] = 'Imagens de perfil dos usuários';
+$string['areadraft'] = 'Rascunhos dos usuários';
+$string['areaname'] = 'Categoria';
+$string['areaoutsidebytes'] = 'Bytes fora do inventário';
+$string['areaoutsidefiles'] = 'Fora do inventário';
+$string['areaprivate'] = 'Arquivos privados dos usuários';
+$string['areaprofile'] = 'Arquivos de perfil dos usuários';
+$string['areasummary'] = 'Outras áreas de arquivos em mdl_files';
+$string['areasummary_note'] = 'Os registros são agrupados por component e filearea. O total de bytes soma os registros atuais de mdl_files naquela área; user/draft corresponde à soma de filesize dos rascunhos. As colunas fora do inventário mostram apenas IDs ausentes do backup virtual deste relatório. A ausência no backup não significa que o arquivo esteja sem uso ou não pertença a um curso.';
+$string['areatotalbytes'] = 'Total de bytes';
+$string['areatotalfiles'] = 'Total de registros';
+$string['bytes'] = 'Bytes';
 $string['comparison'] = 'Comparar com mdl_files';
 $string['comparison_note'] = 'Arquivos ausentes dos inventários dos cursos não são necessariamente órfãos. Outros contextos do Moodle e plugins sem suporte completo a backup podem utilizá-los. Nenhuma exclusão é realizada.';
 $string['completed'] = 'Concluído';
@@ -32,6 +44,8 @@ $string['component'] = 'Componente';
 $string['course'] = 'Curso';
 $string['coursecount'] = 'Cursos para analisar';
 $string['courses'] = 'Cursos';
+$string['coursesummary'] = 'Arquivos por curso';
+$string['coursesummary_note'] = 'Esta tabela utiliza o inventário salvo de cada curso, sem contabilizar diretórios. Os bytes são tamanhos lógicos e arquivos compartilhados aparecem em cada curso. Não representam bytes físicos exclusivos no filedir.';
 $string['created'] = 'Criado';
 $string['createdby'] = 'Criado por';
 $string['createfailed'] = 'Não foi possível criar o relatório.';

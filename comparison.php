@@ -26,6 +26,7 @@ require_once(__DIR__ . '/../../config.php');
 
 $id = required_param('id', PARAM_INT);
 $page = max(0, optional_param('page', 0, PARAM_INT));
+$coursepage = max(0, optional_param('coursepage', 0, PARAM_INT));
 require_login();
 $context = context_system::instance();
 require_capability('local/filexray:view', $context);
@@ -51,6 +52,20 @@ $matched = (int) $DB->count_records_sql(
 $unmatched = (int) $DB->count_records_sql(
     "SELECT COUNT(*) FROM {files} f WHERE " . $where, $params
 );
+// Course totals come from the saved backup inventories, not a live course context lookup.
+$coursepagesize = 50;
+$coursecount = $DB->count_records('local_filexray_course', ['reportid' => $id]);
+$courses = \local_filexray\comparison_summary::courses(
+    $id, $coursepage * $coursepagesize, $coursepagesize
+);
+foreach ($courses as &$course) {
+    $course['url'] = (new moodle_url('/local/filexray/course.php', [
+        'id' => $id, 'coursejobid' => $course['id'],
+    ]))->out(false);
+}
+unset($course);
+$areas = \local_filexray\comparison_summary::fileareas($id);
+
 $limit = 50;
 $rows = $DB->get_records_sql(
     "SELECT f.id, f.filename, f.component, f.filearea, f.filesize, f.contextid
@@ -71,6 +86,17 @@ foreach ($rows as $r) {
 }
 $data = [
     'reportid' => $id,
+    'courses' => $courses,
+    'coursecount' => $coursecount,
+    'areas' => $areas,
+    'previouscourse' => $coursepage > 0,
+    'previouscourseurl' => (new moodle_url('/local/filexray/comparison.php', [
+        'id' => $id, 'page' => $page, 'coursepage' => max(0, $coursepage - 1),
+    ]))->out(false),
+    'nextcourse' => ($coursepage + 1) * $coursepagesize < $coursecount,
+    'nextcourseurl' => (new moodle_url('/local/filexray/comparison.php', [
+        'id' => $id, 'page' => $page, 'coursepage' => $coursepage + 1,
+    ]))->out(false),
     'total' => $total,
     'matched' => $matched,
     'unmatched' => $unmatched,
@@ -78,10 +104,10 @@ $data = [
     'provisional' => $report->status !== 'completed',
     'previous' => $page > 0,
     'previousurl' => (new moodle_url('/local/filexray/comparison.php',
-        ['id' => $id, 'page' => max(0, $page - 1)]))->out(false),
+        ['id' => $id, 'page' => max(0, $page - 1), 'coursepage' => $coursepage]))->out(false),
     'next' => ($page + 1) * $limit < $unmatched,
     'nexturl' => (new moodle_url('/local/filexray/comparison.php',
-        ['id' => $id, 'page' => $page + 1]))->out(false),
+        ['id' => $id, 'page' => $page + 1, 'coursepage' => $coursepage]))->out(false),
     'reporturl' => (new moodle_url('/local/filexray/report.php', ['id' => $id]))->out(false),
 ];
 

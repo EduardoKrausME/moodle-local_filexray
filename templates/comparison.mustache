@@ -8,6 +8,61 @@
     <p><strong>{{#str}}totaldatabase, local_filexray{{/str}}</strong> {{total}}</p>
     <p><strong>{{#str}}matched, local_filexray{{/str}}</strong> {{matched}}</p>
     <p><strong>{{#str}}unmatchedcount, local_filexray{{/str}}</strong> {{unmatched}}</p>
+    <h3>{{#str}}coursesummary, local_filexray{{/str}}</h3>
+    <p>{{#str}}coursesummary_note, local_filexray{{/str}}</p>
+    <p><strong>{{#str}}coursecount, local_filexray{{/str}}</strong> {{coursecount}}</p>
+    <table class="generaltable table">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}course, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}status, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}files, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}bytes, local_filexray{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#courses}}
+                <tr>
+                    <td><a href="{{{url}}}">{{coursename}} (#{{courseid}})</a></td>
+                    <td>{{status}}</td>
+                    <td>{{filecount}}</td>
+                    <td>{{bytecount}} ({{size}})</td>
+                </tr>
+            {{/courses}}
+        </tbody>
+    </table>
+    <div class="d-flex gap-2">
+        {{#previouscourse}}<a href="{{{previouscourseurl}}}" class="btn btn-secondary">{{#str}}previous, local_filexray{{/str}}</a>{{/previouscourse}}
+        {{#nextcourse}}<a href="{{{nextcourseurl}}}" class="btn btn-secondary">{{#str}}next, local_filexray{{/str}}</a>{{/nextcourse}}
+    </div>
+    <h3 class="mt-4">{{#str}}areasummary, local_filexray{{/str}}</h3>
+    <p>{{#str}}areasummary_note, local_filexray{{/str}}</p>
+    <table class="generaltable table">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}areaname, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}component, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}filearea, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}areatotalfiles, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}areatotalbytes, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}areaoutsidefiles, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}areaoutsidebytes, local_filexray{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#areas}}
+                <tr>
+                    <td>{{name}}</td>
+                    <td><code>{{component}}</code></td>
+                    <td><code>{{filearea}}</code></td>
+                    <td>{{allcount}}</td>
+                    <td>{{allbytes}} ({{allsize}})</td>
+                    <td>{{outsidecount}}</td>
+                    <td>{{outsidebytes}} ({{outsidesize}})</td>
+                </tr>
+            {{/areas}}
+        </tbody>
+    </table>
     <h3>{{#str}}unmatched, local_filexray{{/str}}</h3>
     <table class="generaltable table">
         <thead><tr>

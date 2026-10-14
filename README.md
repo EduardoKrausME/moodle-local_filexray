@@ -49,3 +49,10 @@ The CI workflow runs PHP lint and the full repository-specific validator from
 https://github.com/EduardoKrausME/moodle-plugin-validate/tree/master/.chatgpt
 
 It does not commit formatter changes automatically.
+
+
+## Detailed comparison
+
+The comparison page now shows paginated per-course counts and logical bytes taken from the saved report, followed by a file-area breakdown grouped by `component` and `filearea`. User drafts (`user/draft`), user icons (`user/icon`), private files (`user/private`) and profile files (`user/profile`) are shown first. The draft total is equivalent to `SUM(filesize)` for its file area; physical duplicates are not deduplicated.
+
+For each area, totals across the current `mdl_files` table are displayed alongside counts and logical bytes **not found in this report's course backup inventory**. These areas are not automatically orphaned, and the report does not estimate exclusively reclaimable space.

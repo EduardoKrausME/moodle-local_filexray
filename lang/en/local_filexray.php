@@ -25,6 +25,18 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['administration'] = 'File X-Ray administration';
+$string['areaavatar'] = 'User profile pictures';
+$string['areadraft'] = 'User drafts';
+$string['areaname'] = 'Category';
+$string['areaoutsidebytes'] = 'Outside inventory bytes';
+$string['areaoutsidefiles'] = 'Outside inventory';
+$string['areaprivate'] = 'Private user files';
+$string['areaprofile'] = 'User profile files';
+$string['areasummary'] = 'Other file areas in mdl_files';
+$string['areasummary_note'] = 'Groups are identified by component and filearea. Total bytes sum the current mdl_files records in that area; user/draft corresponds to SUM(filesize) for user drafts. Outside-inventory columns count only file IDs missing from the selected report. Missing from a course backup does not mean unused or unrelated to courses.';
+$string['areatotalbytes'] = 'Total bytes';
+$string['areatotalfiles'] = 'Total file records';
+$string['bytes'] = 'Bytes';
 $string['comparison'] = 'Compare with mdl_files';
 $string['comparison_note'] = 'Files not included in course inventories are not necessarily orphaned. Other Moodle contexts and unsupported backup plugins may still use them. No deletion is performed.';
 $string['completed'] = 'Completed';
@@ -32,6 +44,8 @@ $string['component'] = 'Component';
 $string['course'] = 'Course';
 $string['coursecount'] = 'Courses to inspect';
 $string['courses'] = 'Courses';
+$string['coursesummary'] = 'Files by course';
+$string['coursesummary_note'] = 'This section uses the inventory snapshot for each course, excluding directories. Bytes are logical sizes and files shared between courses appear in each course. They are not unique physical filedir bytes.';
 $string['created'] = 'Created';
 $string['createdby'] = 'Created by';
 $string['createfailed'] = 'Unable to create the report.';
