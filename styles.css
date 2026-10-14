@@ -48,6 +48,7 @@
     font-variant-numeric: tabular-nums;
     color: inherit;
     overflow-wrap: anywhere;
+    text-align: center;
 }
 
 /*
