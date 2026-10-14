@@ -40,10 +40,8 @@
     <table class="generaltable table">
         <thead>
             <tr>
-                <th scope="col">{{#str}}areaname, local_filexray{{/str}}</th>
-                <th scope="col">{{#str}}areadescription, local_filexray{{/str}}</th>
-                <th scope="col">{{#str}}component, local_filexray{{/str}}</th>
-                <th scope="col">{{#str}}filearea, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}areaname, local_filexray{{/str}} / {{#str}}areadescription, local_filexray{{/str}}</th>
+                <th scope="col">{{#str}}component, local_filexray{{/str}} / {{#str}}filearea, local_filexray{{/str}}</th>
                 <th scope="col">{{#str}}areatotalfiles, local_filexray{{/str}}</th>
                 <th scope="col">{{#str}}areatotalbytes, local_filexray{{/str}}</th>
                 <th scope="col">{{#str}}areaoutsidefiles, local_filexray{{/str}}</th>
@@ -53,21 +51,18 @@
         <tbody>
             {{#areas}}
                 <tr>
-                    <td>{{#iscomponent}}<strong>{{name}}</strong>{{/iscomponent}}{{^iscomponent}}{{name}}{{/iscomponent}}</td>
                     <td>
-                        {{description}}
-                        <div class="small mt-1">
-                            <a href="{{{docurl}}}" target="_blank" rel="noopener noreferrer">
-                                <strong>{{#str}}areadoclink, local_filexray{{/str}}</strong> ↗
-                            </a>
-                        </div>
+                        <h4 class="h6 mb-2">{{name}}</h4>
+                        <p class="mb-1">{{description}}</p>
+                        <a href="{{{docurl}}}" target="_blank" rel="noopener noreferrer">
+                            <strong>{{#str}}areadoclink, local_filexray{{/str}}</strong> ↗
+                        </a>
                     </td>
-                    <td><code>{{component}}</code></td>
-                    <td><code>{{filearea}}</code></td>
+                    <td><code>{{component}}/{{filearea}}</code></td>
                     <td>{{allcount}}</td>
-                    <td>{{allbytes}} ({{allsize}})</td>
+                    <td>{{allsize}}</td>
                     <td>{{outsidecount}}</td>
-                    <td>{{outsidebytes}} ({{outsidesize}})</td>
+                    <td>{{outsidesize}}</td>
                 </tr>
             {{/areas}}
         </tbody>
