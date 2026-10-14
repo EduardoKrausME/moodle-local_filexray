@@ -47,6 +47,7 @@ final class create_report extends external_api {
      */
     public static function execute(): array {
         global $USER;
+        self::validate_parameters(self::execute_parameters(), []);
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/filexray:run', $context);
