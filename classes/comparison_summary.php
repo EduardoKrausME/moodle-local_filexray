@@ -142,7 +142,9 @@ final class comparison_summary {
                     $componenttotals[$record->component]['outsidebytes'] += $outsidebytes;
                 }
 
-                if ($outsidecount === 0 && !isset($labels[$key])) {
+                // A group with no actual files must not appear, even if it
+                // has directory metadata or a preferred category label.
+                if ($count === 0 || ($outsidecount === 0 && !isset($labels[$key]))) {
                     continue;
                 }
                 $rows[$key] = self::area_row(
@@ -162,6 +164,9 @@ final class comparison_summary {
 
         // Component-only totals correspond to WHERE component = 'backup' or 'core_h5p'.
         foreach ($componenttotals as $component => $totals) {
+            if ($totals['allcount'] === 0) {
+                continue;
+            }
             $key = $component . '/*';
             $rows[$key] = self::area_row(
                 $component,
@@ -173,16 +178,6 @@ final class comparison_summary {
                 $labels[$key],
                 (int) array_search($key, $order, true)
             );
-        }
-
-        // Show the specifically requested areas even on an empty installation.
-        foreach ($labels as $key => $labelids) {
-            if (isset($rows[$key])) {
-                continue;
-            }
-            [$component, $filearea] = explode('/', $key, 2);
-            $rows[$key] = self::area_row($component, $filearea, 0, 0, 0, 0,
-                $labelids, (int) array_search($key, $order, true));
         }
 
         $result = array_values($rows);

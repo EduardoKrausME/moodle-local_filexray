@@ -116,7 +116,14 @@ final class comparison_summary_test extends \advanced_testcase {
             ['component' => 'user', 'area' => 'draft']
         );
         $this->assertNotNull($draft);
-        $this->assertNotNull($icon);
+        // A category must be omitted when it contains no actual files.
+        // Some Moodle fixtures may already contain a user icon.
+        foreach ($areas as $area) {
+            $this->assertGreaterThan(0, $area['allcount']);
+        }
+        if ($icon !== null) {
+            $this->assertGreaterThan(0, $icon['allcount']);
+        }
         $this->assertGreaterThanOrEqual(5, $expected);
         $this->assertSame($expected, $draft['allbytes']);
         $this->assertSame($expected, $draft['outsidebytes']);
