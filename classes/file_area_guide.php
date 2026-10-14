@@ -24,8 +24,6 @@
 
 namespace local_filexray;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Shared file-area documentation mapping for course and comparison tables.
  */

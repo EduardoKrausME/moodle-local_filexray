@@ -24,8 +24,6 @@
 
 namespace local_filexray;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Persistent report snapshot and AJAX progress.
  */

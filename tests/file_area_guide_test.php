@@ -24,8 +24,6 @@
 
 namespace local_filexray;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Verify documentation URLs and component labels.
  *

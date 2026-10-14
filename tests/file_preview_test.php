@@ -24,8 +24,6 @@
 
 namespace local_filexray;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Preview classification and short-lived signed file verification.
  *

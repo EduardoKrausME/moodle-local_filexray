@@ -24,8 +24,6 @@
 
 namespace local_filexray;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core\task\manager;
 use local_filexray\task\process_course;
 use Throwable;

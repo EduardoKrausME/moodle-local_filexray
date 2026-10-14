@@ -24,8 +24,6 @@
 
 namespace local_filexray;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Aggregate logical sizes from the inventory and current mdl_files records.
  */

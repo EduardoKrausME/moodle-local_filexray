@@ -24,8 +24,6 @@
 
 namespace local_filexray\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Inventories precisely one course per cron execution.
  */

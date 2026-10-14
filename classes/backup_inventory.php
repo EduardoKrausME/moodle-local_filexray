@@ -24,8 +24,6 @@
 
 namespace local_filexray;
 
-defined('MOODLE_INTERNAL') || die();
-
 use backup;
 use backup_controller;
 use backup_controller_dbops;
