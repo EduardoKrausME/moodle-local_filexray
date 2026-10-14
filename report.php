@@ -30,6 +30,10 @@ $context = context_system::instance();
 require_capability('local/filexray:view', $context);
 
 $report = \local_filexray\report_manager::get($id);
+if (in_array($report->status, ['completed', 'partial'], true)) {
+    // Completed reports always open their comparison, including on later visits.
+    redirect(new moodle_url('/local/filexray/comparison.php', ['id' => $id]));
+}
 $PAGE->set_url(new moodle_url('/local/filexray/report.php', ['id' => $id]));
 $PAGE->set_context($context);
 $PAGE->set_title(get_string('report', 'local_filexray', $id));
@@ -39,7 +43,6 @@ $PAGE->requires->js_call_amd('local_filexray/reports', 'initReport', [$id]);
 $data = [
     'id' => $id,
     'total' => $report->totalcourses,
-    'progresscomplete' => in_array($report->status, ['completed', 'partial'], true),
     'canresume' => has_capability('local/filexray:run', $context),
     'comparisonurl' => (new moodle_url('/local/filexray/comparison.php', ['id' => $id]))->out(false),
     'coursebaseurl' => (new moodle_url('/local/filexray/course.php'))->out(false),

@@ -1,12 +1,10 @@
-<div data-region="filexray-report" data-reportid="{{id}}" data-course-url="{{coursebaseurl}}">
-    {{^progresscomplete}}
-        <div role="status" aria-live="polite">
-            <strong data-region="summary">0 / {{total}}</strong>
-            <span data-region="percent">0%</span>
-        </div>
-        <progress data-region="progress" max="100" value="0" class="w-100"
-            aria-label="{{#str}}progress, local_filexray{{/str}}"></progress>
-    {{/progresscomplete}}
+<div data-region="filexray-report" data-reportid="{{id}}" data-course-url="{{{coursebaseurl}}}" data-comparison-url="{{{comparisonurl}}}">
+    <div role="status" aria-live="polite">
+        <strong data-region="summary">0 / {{total}}</strong>
+        <span data-region="percent">0%</span>
+    </div>
+    <progress data-region="progress" max="100" value="0" class="w-100"
+        aria-label="{{#str}}progress, local_filexray{{/str}}"></progress>
     <div class="d-flex flex-wrap gap-3 my-3">
         <span>{{#str}}donecount, local_filexray{{/str}} <strong data-region="completed">0</strong></span>
         <span>{{#str}}failedcount, local_filexray{{/str}} <strong data-region="failed">0</strong></span>
@@ -17,9 +15,6 @@
             {{#str}}resume, local_filexray{{/str}}
         </button>
     {{/canresume}}
-    <a href="{{{comparisonurl}}}" class="btn btn-outline-secondary">
-        {{#str}}comparison, local_filexray{{/str}}
-    </a>
     <a href="{{{indexurl}}}" class="btn btn-link">{{#str}}previousreports, local_filexray{{/str}}</a>
     <p class="mt-3">{{#str}}staleinfo, local_filexray{{/str}}</p>
     <table class="generaltable table" data-region="course-table"

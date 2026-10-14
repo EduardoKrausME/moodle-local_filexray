@@ -98,21 +98,15 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
 
         var render = function(data) {
             total = data.total;
-            // Remove progress-only elements at 100%, keeping course totals and table.
-            var progress = wrapper.querySelector('[data-region="progress"]');
-            if (data.percent >= 100) {
-                var status = wrapper.querySelector('[role="status"]');
-                if (status) {
-                    status.remove();
-                }
-                if (progress) {
-                    progress.remove();
-                }
-            } else if (progress) {
-                text('summary', (data.completed + data.failed) + ' / ' + data.total);
-                text('percent', data.percent + '%');
-                progress.value = data.percent;
+            // A finished report opens its comparison automatically.
+            if (data.status === 'completed' || data.status === 'partial') {
+                active = false;
+                window.location.replace(wrapper.dataset.comparisonUrl);
+                return;
             }
+            text('summary', (data.completed + data.failed) + ' / ' + data.total);
+            text('percent', data.percent + '%');
+            wrapper.querySelector('[data-region="progress"]').value = data.percent;
             text('completed', data.completed);
             text('failed', data.failed);
             text('files', data.filecount);
@@ -181,7 +175,7 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
             resume.addEventListener('click', function() {
                 resume.disabled = true;
                 invoke('resume_report', {reportid: reportid}).then(function() {
-                    // A new attempt restores progress markup after it was removed at 100%.
+                    // Refresh report state after requesting a retry.
                     window.location.reload();
                 }).catch(function(error) {
                     resume.disabled = false;
