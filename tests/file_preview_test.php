@@ -110,7 +110,8 @@ final class file_preview_test extends advanced_testcase {
             (int) $params['id'], (int) $params['coursejobid'], (int) $params['fileid'],
             (int) $params['expires'], $params['nonce'], $params['sig']
         );
-        $this->assertSame($file->get_id(), $resolved->get_id());
+        // Moodle database drivers may return stored-file IDs as numeric strings.
+        $this->assertSame((int) $file->get_id(), (int) $resolved->get_id());
 
         try {
             file_preview::verify_office(
