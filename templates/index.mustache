@@ -13,8 +13,9 @@
             {{#str}}generate, local_filexray{{/str}}
         </button>
     {{/canrun}}
-    <h3 class="mt-4">{{#str}}previousreports, local_filexray{{/str}}</h3>
+    
     {{#hasreports}}
+        <h3 class="mt-4">{{#str}}previousreports, local_filexray{{/str}}</h3>
         <table class="generaltable table">
             <thead>
                 <tr>
@@ -47,5 +48,7 @@
             </tbody>
         </table>
     {{/hasreports}}
-    {{^hasreports}}<p>{{#str}}no_reports, local_filexray{{/str}}</p>{{/hasreports}}
+    {{^hasreports}}
+        <p>{{#str}}no_reports, local_filexray{{/str}}</p>
+    {{/hasreports}}
 </div>
