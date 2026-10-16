@@ -84,3 +84,13 @@ Na página de cada curso, o File X-Ray ignora os registros de diretório com `fi
 Imagens comuns, PDFs e arquivos de áudio e vídeo compatíveis são servidos pelo próprio Moodle, com autenticação e verificação de `local/filexray:view`. Tipos potencialmente ativos (HTML, SVG, JavaScript) e outros formatos desconhecidos são entregues como download, não renderizados inline.
 
 Documentos Office (`.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx`, formatos OpenDocument) podem ser visualizados no **Google Docs Viewer**, somente após uma confirmação específica do administrador. O plugin emite então um endereço HTTPS assinado com HMAC, limitado ao arquivo do relatório e válido por até dez minutos, acessível ao Google sem a sessão Moodle. Durante esse período, qualquer pessoa que obtenha o endereço completo poderá acessar o arquivo; a prévia envolve transferência do documento ao serviço Google e depende de um Moodle acessível pela internet. Não utilize a opção para documentos confidenciais sem autorização institucional. O download autenticado permanece disponível como alternativa. O inventário não envia dados ao Google automaticamente.
+
+## Optional integration with Moodle MCP
+
+When [local_mcp](https://github.com/EduardoKrausME/moodle-local_mcp) is installed and enabled, it automatically discovers `classes/mcp/provider.php` in File X-Ray. Neither plugin needs a hard dependency, a changed `lib.php`, a database migration, or a modification to the MCP plugin.
+
+READ tools: `filexray_list_reports`, `filexray_report_status`, `filexray_list_course_files`, `filexray_get_comparison` and `filexray_list_unmatched_files`. They require `local/filexray:view` in the system context, return only file metadata (no raw data or public download URLs), and paginate course and file lists with a maximum of 100 entries.
+
+WRITE tools: `filexray_create_report`, `filexray_resume_report` and `filexray_delete_report`. They require `local/filexray:run`, and Moodle MCP must obtain explicit preview/confirmation before execution. Creating a report uses the existing asynchronous cron queue and can remove the oldest File X-Ray report according to retention settings; resuming retries failed inventories; deleting removes File X-Ray snapshot records only, **never** the Moodle `files` table or physical files.
+
+Results of unfinished reports are provisional. Records outside course-backup inventories are **not necessarily orphaned** and must not be deleted based on an MCP response. Ensure Moodle cron is working, and refresh Moodle caches after deployment if newly added MCP tools are not discovered immediately.
