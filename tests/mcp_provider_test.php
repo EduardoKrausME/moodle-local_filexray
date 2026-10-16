@@ -41,6 +41,8 @@ use local_mcp\security\authenticated_identity;
  */
 final class mcp_provider_test extends advanced_testcase {
     /**
+     * Skip when the optional MCP integration is not installed.
+     *
      * @return void
      */
     private function require_mcp(): void {
@@ -50,6 +52,8 @@ final class mcp_provider_test extends advanced_testcase {
     }
 
     /**
+     * Ensure that MCP tools expose unique names and safe write contracts.
+     *
      * @return void
      */
     public function test_provider_tools_are_unique_and_write_tools_require_confirmation(): void {
@@ -76,6 +80,8 @@ final class mcp_provider_test extends advanced_testcase {
     }
 
     /**
+     * List report snapshots and read progress as administrator.
+     *
      * @return void
      */
     public function test_admin_can_read_reports_with_bounded_pagination(): void {
@@ -94,6 +100,8 @@ final class mcp_provider_test extends advanced_testcase {
     }
 
     /**
+     * Reject read access without the required system capability.
+     *
      * @return void
      */
     public function test_read_rejects_identity_without_filexray_capability(): void {
@@ -107,6 +115,8 @@ final class mcp_provider_test extends advanced_testcase {
     }
 
     /**
+     * Prevent reading course inventories through another report.
+     *
      * @return void
      */
     public function test_inventory_cannot_be_read_under_another_report_id(): void {
@@ -130,6 +140,8 @@ final class mcp_provider_test extends advanced_testcase {
     }
 
     /**
+     * Preview write operations without changing database records.
+     *
      * @return void
      */
     public function test_preview_does_not_modify_existing_reports(): void {
@@ -149,6 +161,8 @@ final class mcp_provider_test extends advanced_testcase {
     }
 
     /**
+     * Delete report snapshots without modifying Moodle file records.
+     *
      * @return void
      */
     public function test_write_tool_deletes_only_filexray_snapshot_records(): void {
@@ -166,4 +180,3 @@ final class mcp_provider_test extends advanced_testcase {
         $this->assertSame($filesbefore, $DB->count_records("files"));
     }
 }
-

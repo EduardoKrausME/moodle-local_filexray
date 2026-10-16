@@ -32,6 +32,8 @@ use local_mcp\extension\write_provider_interface;
  */
 final class provider implements read_provider_interface, write_provider_interface {
     /**
+     * Register the available read operations.
+     *
      * @return array
      */
     public function get_read_tools(): array {
@@ -45,6 +47,8 @@ final class provider implements read_provider_interface, write_provider_interfac
     }
 
     /**
+     * Register the available write operations.
+     *
      * @return array
      */
     public function get_write_tools(): array {

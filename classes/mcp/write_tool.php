@@ -41,6 +41,8 @@ final class write_tool extends base_tool {
     private string $operation;
 
     /**
+     * Store the selected MCP operation.
+     *
      * @param string $operation Supported write operation.
      */
     public function __construct(string $operation) {
@@ -101,6 +103,8 @@ final class write_tool extends base_tool {
     }
 
     /**
+     * Resolve the system context for capability enforcement.
+     *
      * @param array $arguments
      * @return context
      */
@@ -128,6 +132,8 @@ final class write_tool extends base_tool {
     }
 
     /**
+     * Describe the operation without modifying any records.
+     *
      * @param array $arguments
      * @param authenticated_identity $identity
      * @return array
@@ -167,6 +173,8 @@ final class write_tool extends base_tool {
     }
 
     /**
+     * Execute the requested operation after authorization.
+     *
      * @param array $arguments
      * @param authenticated_identity $identity
      * @return array

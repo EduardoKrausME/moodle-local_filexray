@@ -38,6 +38,8 @@ final class read_tool extends base_tool {
     private string $operation;
 
     /**
+     * Store the selected MCP operation.
+     *
      * @param string $operation Supported read operation.
      */
     public function __construct(string $operation) {
@@ -111,6 +113,8 @@ final class read_tool extends base_tool {
     }
 
     /**
+     * Resolve the system context for capability enforcement.
+     *
      * @param array $arguments
      * @return context
      */
@@ -119,6 +123,8 @@ final class read_tool extends base_tool {
     }
 
     /**
+     * Execute the requested operation after authorization.
+     *
      * @param array $arguments
      * @param authenticated_identity $identity
      * @return array

@@ -33,6 +33,8 @@ use moodle_url;
  */
 final class service {
     /**
+     * List stored reports with bounded pagination.
+     *
      * @param int $offset First report index.
      * @param int $limit Number of results.
      * @return array
@@ -63,6 +65,8 @@ final class service {
     }
 
     /**
+     * Read the progress of a stored report.
+     *
      * @param int $reportid Report identifier.
      * @param int $offset First course index.
      * @param int $limit Page limit.
@@ -76,6 +80,8 @@ final class service {
     }
 
     /**
+     * Read a course inventory belonging to one report.
+     *
      * @param int $reportid Report identifier.
      * @param int $coursejobid Snapshot course row ID.
      * @param int $offset First file index.
@@ -118,6 +124,8 @@ final class service {
     }
 
     /**
+     * Summarize backup inventory coverage and file areas.
+     *
      * @param int $reportid Report identifier.
      * @param int $offset Course offset.
      * @param int $limit Course page limit.
@@ -161,6 +169,8 @@ final class service {
     }
 
     /**
+     * List records excluded from a completed course inventory.
+     *
      * @param int $reportid Report identifier.
      * @param int $offset File offset.
      * @param int $limit File page limit.
@@ -196,4 +206,3 @@ final class service {
         ];
     }
 }
-
