@@ -64,6 +64,7 @@ final class backup_inventory {
             );
             $backupid = $controller->get_backupid();
             $plan = $controller->get_plan();
+            backup_preferences::apply($plan);
             if (!$plan->setting_exists('files') || !$plan->get_setting('files')->get_value()) {
                 throw new coding_exception('Course backup does not permit file inclusion.');
             }

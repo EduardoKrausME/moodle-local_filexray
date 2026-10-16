@@ -33,6 +33,12 @@ if ($hassiteconfig) {
         5,
         PARAM_INT
     ));
+    $settings->add(new admin_setting_configcheckbox(
+        "local_filexray/skipuserdata",
+        get_string("skipuserdata", "local_filexray"),
+        get_string("skipuserdata_desc", "local_filexray"),
+        0
+    ));
     $ADMIN->add('localplugins', $settings);
 
 

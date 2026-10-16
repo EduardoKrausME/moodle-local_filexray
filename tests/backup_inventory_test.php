@@ -65,4 +65,35 @@ final class backup_inventory_test extends advanced_testcase {
             'fileid' => $storedfile->get_id(),
         ]));
     }
+    /**
+     * A course-level file must still appear with student data disabled.
+     */
+    public function test_inspect_keeps_course_files_without_user_data(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config("skipuserdata", 1, "local_filexray");
+        set_config("backup_general_users", 1, "backup");
+        set_config("backup_general_users_locked", 0, "backup");
+        $course = $this->getDataGenerator()->create_course();
+        $storedfile = get_file_storage()->create_file_from_string([
+            "contextid" => context_course::instance($course->id)->id,
+            "component" => "course",
+            "filearea" => "summary",
+            "itemid" => 0,
+            "filepath" => "/",
+            "filename" => "summary-fast-mode.txt",
+        ], "Course summary remains in the inventory");
+
+        $reportid = report_manager::create((int) get_admin()->id);
+        $snapshot = $DB->get_record("local_filexray_course",
+            ["reportid" => $reportid, "courseid" => $course->id], "*", MUST_EXIST);
+        backup_inventory::inspect($reportid, (int) $snapshot->id,
+            (int) $course->id, (int) get_admin()->id);
+        $this->assertTrue($DB->record_exists("local_filexray_file", [
+            "reportcourseid" => $snapshot->id,
+            "fileid" => $storedfile->get_id(),
+        ]));
+    }
 }

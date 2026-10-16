@@ -17,6 +17,12 @@ The source includes a public overview, installation, native backup inspection, r
 5. Each course's final backup `filefinal` references are captured before Moodle's `fileslist` step. This skips the physical copy, MBZ zip and destination-storage steps.
 6. **Compare with mdl_files** lists file records not encountered by this inventory. These are **not automatically orphaned**: system/user files, other Moodle features and plugins without complete backup support can reference them.
 
+## Performance: excluding learner data
+
+In **Site administration → Plugins → Local plugins → File X-Ray**, enable **Exclude user data from inventory (faster)** to turn off the native Moodle backup `users` setting for subsequent course inspections. This can improve processing time on courses with many participants, submissions and posts. The option is off by default so existing installations preserve their previous behaviour.
+
+**Trade-off:** learner-generated files associated only with user activity may disappear from the inventory and show up as unmatched in the comparison even when they are in active use. This does not delete any files or students and unmatched entries are not evidence that files are orphaned. To inspect those files, leave the option disabled and ensure the native Moodle backup settings permit user data. Do not change this option while a report is running because pending courses would then be inspected differently from completed courses. If the Moodle backup user setting is locked on, the fast-mode inspection fails rather than bypassing the lock.
+
 ## Architecture
 
 * `local_filexray_report` — snapshot metadata and status.
