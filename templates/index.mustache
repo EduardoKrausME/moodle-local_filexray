@@ -1,7 +1,10 @@
 <div class="local-filexray-index" data-region="filexray-index" data-report-url="{{{reportbaseurl}}}"
     data-delete-title="{{#str}}deletereport, local_filexray{{/str}}"
     data-delete-body="{{#str}}deletereportconfirm, local_filexray{{/str}}"
-    data-delete-label="{{#str}}deletereport, local_filexray{{/str}}">
+    data-delete-label="{{#str}}deletereport, local_filexray{{/str}}"
+    data-report-busy="{{#str}}reportbusy, local_filexray{{/str}}"
+    data-reports-busy="{{#str}}reportsbusy, local_filexray{{/str}}">
+    <div class="alert alert-warning" role="alert" tabindex="-1" data-region="operation-warning" hidden></div>
     <p>{{#str}}notbackup, local_filexray{{/str}}</p>
     <p>{{#str}}croninfo, local_filexray{{/str}}</p>
     <p><strong>{{#str}}coursecount, local_filexray{{/str}}</strong> {{courses}}</p>
