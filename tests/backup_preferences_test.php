@@ -33,7 +33,7 @@ use moodle_exception;
 /**
  * Verifies native backup settings in both inventory modes.
  *
- * @covers \\local_filexray\\backup_preferences
+ * @covers \local_filexray\backup_preferences
  */
 final class backup_preferences_test extends advanced_testcase {
     /**
