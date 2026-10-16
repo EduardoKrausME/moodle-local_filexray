@@ -34,6 +34,24 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
             return;
         }
         // Use a Moodle modal instead of the browser's confirm/alert dialogs.
+        var warning = container.querySelector('[data-region="operation-warning"]');
+        var clearWarning = function() {
+            if (warning) {
+                warning.hidden = true;
+                warning.textContent = "";
+            }
+        };
+        var showBusyWarning = function(error) {
+            if (!warning || !error ||
+                    (error.errorcode !== "reportbusy" && error.errorcode !== "reportsbusy")) {
+                return false;
+            }
+            warning.textContent = error.errorcode === "reportbusy" ?
+                container.dataset.reportBusy : container.dataset.reportsBusy;
+            warning.hidden = false;
+            warning.focus();
+            return true;
+        };
         var modalClass = ModalDeleteCancel.default || ModalDeleteCancel;
         var events = ModalEvents.default || ModalEvents;
         container.addEventListener('click', function(e) {
@@ -42,6 +60,7 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
                 return;
             }
             var reportid = Number(trigger.dataset.reportid);
+            clearWarning();
             modalClass.create({
                 title: container.dataset.deleteTitle + ' #' + reportid,
                 body: container.dataset.deleteBody,
@@ -53,7 +72,9 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
                         window.location.reload();
                     }).catch(function(error) {
                         trigger.disabled = false;
-                        Notification.exception(error);
+                        if (!showBusyWarning(error)) {
+                            Notification.exception(error);
+                        }
                     });
                 });
                 modal.show();
@@ -61,13 +82,16 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
             }).catch(Notification.exception);
         });
         button.addEventListener('click', function() {
+            clearWarning();
             button.disabled = true;
             invoke('create_report', {}).then(function(result) {
                 window.location.assign(container.dataset.reportUrl + '?id=' + encodeURIComponent(result.reportid));
                 return result;
             }).catch(function(error) {
                 button.disabled = false;
-                Notification.exception(error);
+                if (!showBusyWarning(error)) {
+                    Notification.exception(error);
+                }
             });
         });
     };
