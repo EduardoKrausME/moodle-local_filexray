@@ -69,8 +69,8 @@ final class backup_inventory {
                 throw new coding_exception('Course backup does not permit file inclusion.');
             }
 
-            // The native plugins will select files in their backup tasks. We do not
-            // scan course contexts with ad-hoc SQL to guess file ownership.
+            // Native backup plugins select their own file references here. The
+            // supplementary course/module context pass runs separately in the worker.
             // set_status() persists the controller and reopens file loggers after
             // serialisation. An explicit save_controller() beforehand would close
             // file_logger::$fhandle and break the very next backup log write.

@@ -53,7 +53,7 @@ $matched = (int) $DB->count_records_sql(
 $unmatched = (int) $DB->count_records_sql(
     "SELECT COUNT(*) FROM {files} f WHERE " . $where, $params
 );
-// Course totals come from the saved backup inventories, not a live course context lookup.
+// Course totals come from saved backup and context inventories, not a live context lookup.
 $coursepagesize = 50;
 $allcoursecount = $DB->count_records("local_filexray_course", ["reportid" => $id]);
 $coursecount = $DB->count_records("local_filexray_course", [

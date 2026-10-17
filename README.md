@@ -15,13 +15,14 @@ The source includes a public overview, installation, native backup inspection, r
 3. An ad-hoc cron task inventories **one course at a time**. A report-level lock prevents parallel work on the same report and the worker queues the next course after completing the previous one.
 4. The browser polls progress over Moodle's authenticated `core/ajax`, displaying progress, errors and the 50 courses on the selected page. Closing the tab does not stop cron.
 5. Each course's final backup `filefinal` references are captured before Moodle's `fileslist` step. This skips the physical copy, MBZ zip and destination-storage steps.
-6. **Compare with mdl_files** lists file records not encountered by this inventory. These are **not automatically orphaned**: system/user files, other Moodle features and plugins without complete backup support can reference them.
+6. The same background worker also looks up `mdl_files` records belonging to the course context and all of its `course_modules` contexts. Files absent from the native backup inventory are appended to `local_filexray_file`, deduplicated by file ID within each report/course.
+7. **Compare with mdl_files** lists file records not encountered by this combined inventory. These are **not automatically orphaned**: system/user files, other Moodle features and plugins without complete backup support can reference them.
 
 ## Performance: excluding learner data
 
 In **Site administration → Plugins → Local plugins → File X-Ray**, enable **Exclude user data from inventory (faster)** to turn off the native Moodle backup `users` setting for subsequent course inspections. This can improve processing time on courses with many participants, submissions and posts. The option is off by default so existing installations preserve their previous behaviour.
 
-**Trade-off:** learner-generated files associated only with user activity may disappear from the inventory and show up as unmatched in the comparison even when they are in active use. This does not delete any files or students and unmatched entries are not evidence that files are orphaned. To inspect those files, leave the option disabled and ensure the native Moodle backup settings permit user data. Do not change this option while a report is running because pending courses would then be inspected differently from completed courses. If the Moodle backup user setting is locked on, the fast-mode inspection fails rather than bypassing the lock.
+**Trade-off:** files in the course and activity contexts are still inventoried, even if the backup excludes user data. Learner-generated files kept in other contexts (such as user contexts) and not referenced by the backup may still show up as unmatched despite being in use. This does not delete any files or students and unmatched entries are not evidence that files are orphaned. To inspect those files, leave the option disabled and ensure the native Moodle backup settings permit user data. Do not change this option while a report is running because pending courses would then be inspected differently from completed courses. If the Moodle backup user setting is locked on, the fast-mode inspection fails rather than bypassing the lock.
 
 ## Architecture
 
@@ -29,6 +30,7 @@ In **Site administration → Plugins → Local plugins → File X-Ray**, enable 
 * `local_filexray_course` — one course job per report, with timestamps/errors/counts.
 * `local_filexray_file` — file record ID, content hash and related metadata for a given course and report.
 * `classes/backup_inventory.php` — runs Moodle's general backup plan through the final annotation migration, but deliberately stops **before** `backup_final_files_structure_step` (`fileslist`), which would otherwise copy files.
+* `classes/course_context_inventory.php` — adds file metadata for the course and activity context IDs, including file areas overlooked by backup plugins, without inserting an existing report/course file ID twice.
 * `classes/task/process_course.php` — one task per course, chaining the next job on cron.
 * `classes/report_manager.php` — immutable course snapshot and paginated live progress.
 
@@ -38,7 +40,7 @@ In **Site administration → Plugins → Local plugins → File X-Ray**, enable 
 
 Only users with `local/filexray:view` can see inventories; `local/filexray:run` is needed to create and resume reports. Both capabilities are system-context capabilities. The comparison is read-only and never deletes a file.
 
-This implementation inventories the file records that the ordinary Moodle backup flow can resolve. It does not claim every record outside that set is unreferenced or safe to delete; neither does it scan `moodledata/filedir` for physical orphan hashes. A file can be shared by several records with the same `contenthash` and therefore file record counts are not equivalent to occupied disk bytes.
+This implementation combines file references resolved by Moodle backup with files directly attached to the course or activity contexts. It does not claim every record outside that set is unreferenced or safe to delete; neither does it scan `moodledata/filedir` for physical orphan hashes. A file can be shared by several records with the same `contenthash` and therefore file record counts are not equivalent to occupied disk bytes.
 
 A failed course makes the entire comparison provisional. Reports keep the original list of courses, even if courses are removed after the report was created. A report whose cron worker died can be resumed by selecting **Resume pending courses**; a still-running row is reclaimed only after two hours and after obtaining the exclusive report lock.
 

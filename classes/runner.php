@@ -104,6 +104,9 @@ final class runner {
             try {
                 $count = backup_inventory::inspect($reportid, (int) $row->id,
                     (int) $row->courseid, (int) $report->userid);
+                // Complete the backup references with files stored in course and activity contexts.
+                $count += course_context_inventory::append($reportid, (int) $row->id,
+                    (int) $row->courseid);
                 $DB->update_record('local_filexray_course', (object) [
                     'id' => $row->id, 'status' => 'completed',
                     'filecount' => $count, 'timefinished' => time(), 'errormessage' => null,
