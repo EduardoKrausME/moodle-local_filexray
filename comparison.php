@@ -44,8 +44,10 @@ $PAGE->set_heading(get_string('comparison', 'local_filexray'));
 [$where, $params] = comparison_summary::unmatched_condition($id);
 $total = (int) $DB->count_records_select('files', "filename <> :dir", ['dir' => '.']);
 $matched = (int) $DB->count_records_sql(
-    "SELECT COUNT(DISTINCT fileid) FROM {local_filexray_file}
-      WHERE reportid = :rid AND filename <> :dir",
+    "SELECT COUNT(DISTINCT f.id)
+       FROM {local_filexray_file} fx
+       JOIN {files} f ON f.id = fx.fileid
+      WHERE fx.reportid = :rid AND f.filename <> :dir",
     ['rid' => $id, 'dir' => '.']
 );
 $unmatched = (int) $DB->count_records_sql(
@@ -53,7 +55,11 @@ $unmatched = (int) $DB->count_records_sql(
 );
 // Course totals come from the saved backup inventories, not a live course context lookup.
 $coursepagesize = 50;
-$coursecount = $DB->count_records('local_filexray_course', ['reportid' => $id]);
+$allcoursecount = $DB->count_records("local_filexray_course", ["reportid" => $id]);
+$coursecount = $DB->count_records("local_filexray_course", [
+    "reportid" => $id,
+    "status" => "completed",
+]);
 $courses = comparison_summary::courses(
     $id, $coursepage * $coursepagesize, $coursepagesize
 );
@@ -74,25 +80,63 @@ foreach ($areas as &$area) {
 }
 unset($area);
 
-$unmatchedurl = (new moodle_url('/local/filexray/unmatched.php', ['id' => $id]))->out(false);
+// These groups are mutually exclusive subsets of the current Moodle files table.
+$classified = max(0, $total - $matched - $unmatched);
+$matchedpercent = $total ? 100 * $matched / $total : 0;
+$classifiedendpercent = $total ? 100 * ($matched + $classified) / $total : 0;
+
+// Compare the most populated courses on the currently displayed page only.
+$topcourses = $courses;
+usort($topcourses, static function(array $first, array $second): int {
+    return ($second["filecount"] <=> $first["filecount"])
+        ?: ($first["courseid"] <=> $second["courseid"]);
+});
+$topcourses = array_slice($topcourses, 0, 5);
+$maxcoursefiles = $topcourses ? max(array_column($topcourses, "filecount")) : 0;
+foreach ($topcourses as &$topcourse) {
+    $topcourse["chartwidth"] = $maxcoursefiles
+        ? round(100 * $topcourse["filecount"] / $maxcoursefiles, 1) : 0;
+    $topcourse["formattedfilecount"] = number_format($topcourse["filecount"], 0, ",", ".");
+}
+unset($topcourse);
+
+$unmatchedurl = (new moodle_url("/local/filexray/unmatched.php", ["id" => $id]))->out(false);
+$settingsurl = (new moodle_url("/admin/settings.php", [
+    "section" => "local_filexray_settings",
+]))->out(false);
 
 $data = [
     'reportid' => $id,
     'unmatchedurl' => $unmatchedurl,
+    "skipuserdatawarning" => (bool) get_config("local_filexray", "skipuserdata"),
+    "caneditsettings" => has_capability("moodle/site:config", $context),
+    "settingsurl" => $settingsurl,
+    "provisional" => $report->status !== "completed",
+    "chart_has_files" => $total > 0,
+    "chart_has_courses" => $maxcoursefiles > 0,
+    "chartmatchedpercent" => number_format($matchedpercent, 2, ".", ""),
+    "chartclassifiedendpercent" => number_format($classifiedendpercent, 2, ".", ""),
+    "chartmatchedpercentlabel" => number_format($matchedpercent, 1, ",", ".") . "%",
+    "chartclassifiedformatted" => number_format($classified, 0, ",", "."),
+    "topcourses" => $topcourses,
     'courses' => $courses,
     'coursecount' => $coursecount,
+    "coursecountformatted" => number_format($coursecount, 0, ",", "."),
     'areas' => $areas,
     'previouscourse' => $coursepage > 0,
     'previouscourseurl' => (new moodle_url('/local/filexray/comparison.php', [
         'id' => $id, 'coursepage' => max(0, $coursepage - 1),
     ]))->out(false),
-    'nextcourse' => ($coursepage + 1) * $coursepagesize < $coursecount,
+    'nextcourse' => ($coursepage + 1) * $coursepagesize < $allcoursecount,
     'nextcourseurl' => (new moodle_url('/local/filexray/comparison.php', [
         'id' => $id, 'coursepage' => $coursepage + 1,
     ]))->out(false),
     'total' => $total,
     'matched' => $matched,
     'unmatched' => $unmatched,
+    "totalformatted" => number_format($total, 0, ",", "."),
+    "matchedformatted" => number_format($matched, 0, ",", "."),
+    "unmatchedformatted" => number_format($unmatched, 0, ",", "."),
 ];
 
 echo $OUTPUT->header();

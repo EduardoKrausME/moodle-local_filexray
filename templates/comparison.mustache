@@ -4,13 +4,21 @@
             {{#str}}reportnotready, local_filexray{{/str}}
         </div>
     {{/provisional}}
+    {{#skipuserdatawarning}}
+        <div class="alert alert-warning" role="alert">
+            {{#str}}skipuserdatawarning, local_filexray{{/str}}
+            {{#caneditsettings}}
+                <a class="alert-link" href="{{{settingsurl}}}">{{#str}}editsettings, local_filexray{{/str}}</a>
+            {{/caneditsettings}}
+        </div>
+    {{/skipuserdatawarning}}
     <p>{{#str}}comparison_note, local_filexray{{/str}}</p>
     <div class="row filexray-stats mt-4 mb-3">
         <div class="col-12 col-sm-6 col-xl-3 mb-3">
             <div class="card filexray-metric filexray-metric--total h-100">
                 <div class="card-body">
                     <div class="filexray-metric-label">{{#str}}totaldatabase, local_filexray{{/str}}</div>
-                    <div class="filexray-metric-value">{{total}}</div>
+                    <div class="filexray-metric-value">{{totalformatted}}</div>
                 </div>
             </div>
         </div>
@@ -18,7 +26,7 @@
             <div class="card filexray-metric filexray-metric--matched h-100">
                 <div class="card-body">
                     <div class="filexray-metric-label">{{#str}}matched, local_filexray{{/str}}</div>
-                    <div class="filexray-metric-value">{{matched}}</div>
+                    <div class="filexray-metric-value">{{matchedformatted}}</div>
                 </div>
             </div>
         </div>
@@ -26,7 +34,7 @@
             <div class="card filexray-metric filexray-metric--outside h-100">
                 <div class="card-body">
                     <div class="filexray-metric-label">{{#str}}unmatchedcount, local_filexray{{/str}}</div>
-                    <div class="filexray-metric-value">{{unmatched}}</div>
+                    <div class="filexray-metric-value">{{unmatchedformatted}}</div>
                 </div>
             </div>
         </div>
@@ -34,9 +42,57 @@
             <div class="card filexray-metric filexray-metric--courses h-100">
                 <div class="card-body">
                     <div class="filexray-metric-label">{{#str}}coursecount, local_filexray{{/str}}</div>
-                    <div class="filexray-metric-value">{{coursecount}}</div>
+                    <div class="filexray-metric-value">{{coursecountformatted}}</div>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="row filexray-charts mb-4">
+        <div class="col-12 col-lg-5 mb-3">
+            <section class="card filexray-chart h-100" aria-labelledby="filexray-chart-coverage">
+                <div class="card-body">
+                    <h3 class="h5" id="filexray-chart-coverage">{{#str}}chartcoverage, local_filexray{{/str}}</h3>
+                    <p class="text-muted small">{{#str}}chartcoverage_note, local_filexray{{/str}}</p>
+                    {{#chart_has_files}}
+                        <div class="filexray-chart-donut" aria-hidden="true" style="--filexray-chart-match: {{chartmatchedpercent}}%; --filexray-chart-other-end: {{chartclassifiedendpercent}}%;">
+                            <div class="filexray-chart-donut-hole">
+                                <strong>{{chartmatchedpercentlabel}}</strong>
+                                <span>{{#str}}chartininventory, local_filexray{{/str}}</span>
+                            </div>
+                        </div>
+                        <ul class="filexray-chart-legend">
+                            <li><span class="filexray-chart-swatch filexray-chart-swatch--matched"></span><span>{{#str}}chartininventory, local_filexray{{/str}}</span><strong>{{matchedformatted}}</strong></li>
+                            <li><span class="filexray-chart-swatch filexray-chart-swatch--classified"></span><span>{{#str}}chartotherareas, local_filexray{{/str}}</span><strong>{{chartclassifiedformatted}}</strong></li>
+                            <li><span class="filexray-chart-swatch filexray-chart-swatch--unmatched"></span><span>{{#str}}chartresidual, local_filexray{{/str}}</span><strong>{{unmatchedformatted}}</strong></li>
+                        </ul>
+                    {{/chart_has_files}}
+                    {{^chart_has_files}}<p>{{#str}}chartnodata, local_filexray{{/str}}</p>{{/chart_has_files}}
+                </div>
+            </section>
+        </div>
+        <div class="col-12 col-lg-7 mb-3">
+            <section class="card filexray-chart h-100" aria-labelledby="filexray-chart-courses">
+                <div class="card-body">
+                    <h3 class="h5" id="filexray-chart-courses">{{#str}}charttopcourses, local_filexray{{/str}}</h3>
+                    <p class="text-muted small">{{#str}}charttopcourses_note, local_filexray{{/str}}</p>
+                    {{#chart_has_courses}}
+                        <ol class="filexray-chart-course-list">
+                            {{#topcourses}}
+                                <li>
+                                    <div class="filexray-chart-course-heading">
+                                        <a href="{{{url}}}">{{{coursename}}} (#{{courseid}})</a>
+                                        <strong>{{formattedfilecount}}</strong>
+                                    </div>
+                                    <div class="filexray-chart-bar-track" aria-hidden="true">
+                                        <div class="filexray-chart-bar" style="width: {{chartwidth}}%;"></div>
+                                    </div>
+                                </li>
+                            {{/topcourses}}
+                        </ol>
+                    {{/chart_has_courses}}
+                    {{^chart_has_courses}}<p>{{#str}}chartnodata, local_filexray{{/str}}</p>{{/chart_has_courses}}
+                </div>
+            </section>
         </div>
     </div>
     <p class="mb-4">
