@@ -257,12 +257,29 @@ final class report_manager {
         $rs = $DB->get_records('local_filexray_course', ['reportid' => $reportid],
             'courseid ASC', 'id, courseid, coursename, status, filecount, timestarted, timefinished, errormessage',
             $offset, $limit);
+        // Aggregate stored logical file sizes once for the requested page, not once per course.
+        $coursebytes = [];
+        if ($rs) {
+            [$insql, $inparams] = $DB->get_in_or_equal(array_keys($rs), SQL_PARAMS_NAMED, "coursejob");
+            $sql = "SELECT reportcourseid, COALESCE(SUM(filesize), 0) AS bytecount
+                      FROM {local_filexray_file}
+                     WHERE reportid = :bytesreportid AND reportcourseid $insql
+                  GROUP BY reportcourseid";
+            $totals = $DB->get_records_sql($sql, ["bytesreportid" => $reportid] + $inparams);
+            foreach ($totals as $total) {
+                $coursebytes[(int) $total->reportcourseid] = (int) $total->bytecount;
+            }
+        }
+
         $courses = [];
         foreach ($rs as $row) {
+            $bytecount = $coursebytes[(int) $row->id] ?? 0;
             $courses[] = [
                 'id' => (int) $row->id, 'courseid' => (int) $row->courseid,
                 'name' => $row->coursename, 'status' => $row->status,
-                'filecount' => (int) $row->filecount, 'error' => (string) ($row->errormessage ?? ''),
+                'filecount' => (int) $row->filecount,
+                "bytecount" => $bytecount, "size" => display_size($bytecount),
+                'error' => (string) ($row->errormessage ?? ''),
                 'started' => (int) $row->timestarted, 'finished' => (int) $row->timefinished,
             ];
         }

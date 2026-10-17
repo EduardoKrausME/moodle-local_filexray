@@ -113,6 +113,64 @@ final class report_manager_test extends advanced_testcase {
     }
 
     /**
+     * Report progress includes the sum of inventoried file bytes per course.
+     *
+     * The response must preserve pagination and use a human-readable Moodle size.
+     */
+    public function test_status_includes_file_bytes_per_course(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $first = $this->getDataGenerator()->create_course();
+        $second = $this->getDataGenerator()->create_course();
+        $reportid = report_manager::create((int) get_admin()->id);
+        $firstjob = $DB->get_record("local_filexray_course",
+            ["reportid" => $reportid, "courseid" => $first->id], "*", MUST_EXIST);
+        $secondjob = $DB->get_record("local_filexray_course",
+            ["reportid" => $reportid, "courseid" => $second->id], "*", MUST_EXIST);
+
+        foreach ([
+            [$firstjob, 91000001, 1024],
+            [$firstjob, 91000002, 2048],
+            [$secondjob, 91000003, 8192],
+        ] as [$job, $fileid, $filesize]) {
+            $DB->insert_record("local_filexray_file", (object) [
+                "reportid" => $reportid,
+                "reportcourseid" => $job->id,
+                "courseid" => $job->courseid,
+                "fileid" => $fileid,
+                "contenthash" => str_repeat("a", 40),
+                "filesize" => $filesize,
+                "contextid" => context_course::instance($job->courseid)->id,
+                "component" => "mod_resource",
+                "filearea" => "content",
+                "filename" => "status-test-$fileid.txt",
+            ]);
+        }
+
+        $status = report_manager::status($reportid, 0, 100);
+        $courses = array_column($status["courses"], null, "courseid");
+        $this->assertArrayHasKey($first->id, $courses);
+        $this->assertArrayHasKey($second->id, $courses);
+
+        foreach ([$firstjob, $secondjob] as $job) {
+            $expected = (int) $DB->get_field_sql(
+                "SELECT COALESCE(SUM(filesize), 0)
+                   FROM {local_filexray_file} WHERE reportcourseid = :coursejob",
+                ["coursejob" => $job->id]
+            );
+            $this->assertSame($expected, $courses[$job->courseid]["bytecount"]);
+            $this->assertSame(display_size($expected), $courses[$job->courseid]["size"]);
+        }
+
+        $page = report_manager::status($reportid, 0, 1);
+        $this->assertCount(1, $page["courses"]);
+        $this->assertArrayHasKey("bytecount", $page["courses"][0]);
+        $this->assertArrayHasKey("size", $page["courses"][0]);
+    }
+
+    /**
      * Creating a new report at the retention limit evicts only the oldest.
      */
     public function test_create_report_respects_maximum_retention(): void {

@@ -151,7 +151,7 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
                 td.appendChild(anchor);
                 tr.appendChild(td);
                 cell(tr, table.dataset[course.status] || course.status);
-                cell(tr, course.filecount);
+                cell(tr, course.filecount + " / " + course.size);
                 cell(tr, date(course.started));
                 cell(tr, date(course.finished));
                 cell(tr, course.error);
