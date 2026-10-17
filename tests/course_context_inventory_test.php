@@ -74,24 +74,29 @@ final class course_context_inventory_test extends advanced_testcase {
             "reportid" => $reportid, "courseid" => $course->id,
         ], "*", MUST_EXIST);
 
-        // A native backup may have inserted the course file already.
-        $existing = $files["course"];
-        $DB->insert_record("local_filexray_file", (object) [
-            "reportid" => $reportid,
-            "reportcourseid" => $job->id,
-            "courseid" => $course->id,
-            "fileid" => $existing->get_id(),
-            "contenthash" => $existing->get_contenthash(),
-            "filesize" => $existing->get_filesize(),
-            "contextid" => $existing->get_contextid(),
-            "component" => $existing->get_component(),
-            "filearea" => $existing->get_filearea(),
-            "filename" => $existing->get_filename(),
-        ]);
+        // File IDs for both the course and its module are already stored during create().
+        foreach (["course", "module"] as $name) {
+            $this->assertTrue($DB->record_exists("local_filexray_file", [
+                "reportcourseid" => $job->id, "fileid" => $files[$name]->get_id(),
+            ]), $name);
+        }
+        $this->assertSame(2, (int) $DB->get_field("local_filexray_course", "filecount", ["id" => $job->id]));
 
+        // A new file created after the report must be picked up only by the append pass.
+        $newfile = $storage->create_file_from_string([
+            "contextid" => context_module::instance($module->cmid)->id,
+            "component" => "mod_page",
+            "filearea" => "filexray_extra",
+            "itemid" => 0,
+            "filepath" => "/",
+            "filename" => "new-file-after-report.txt",
+        ], "New file after creation");
         $before = $DB->count_records("local_filexray_file", ["reportcourseid" => $job->id]);
         $added = course_context_inventory::append($reportid, (int) $job->id, (int) $course->id);
-        $this->assertGreaterThanOrEqual(1, $added);
+        $this->assertSame(1, $added);
+        $this->assertTrue($DB->record_exists("local_filexray_file", [
+            "reportcourseid" => $job->id, "fileid" => $newfile->get_id(),
+        ]));
         $this->assertSame($before + $added,
             $DB->count_records("local_filexray_file", ["reportcourseid" => $job->id]));
 
@@ -132,6 +137,16 @@ final class course_context_inventory_test extends advanced_testcase {
         ], "Unselected file from an activity context");
 
         $reportid = report_manager::create((int) get_admin()->id);
+        $job = $DB->get_record("local_filexray_course", [
+            "reportid" => $reportid, "courseid" => $course->id,
+        ], "*", MUST_EXIST);
+        $this->assertSame("pending", $job->status);
+        $this->assertTrue($DB->record_exists("local_filexray_file", [
+            "reportcourseid" => $job->id, "fileid" => $file->get_id(),
+        ]));
+        $this->assertSame($DB->count_records("local_filexray_file", ["reportcourseid" => $job->id]),
+            (int) $job->filecount);
+
         runner::one($reportid);
 
         $job = $DB->get_record("local_filexray_course", [

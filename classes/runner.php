@@ -75,9 +75,11 @@ final class runner {
                 ['rid' => $reportid, 'state' => 'running', 'cutoff' => $cutoff]);
             foreach ($stale as $old) {
                 $DB->delete_records('local_filexray_file', ['reportcourseid' => $old->id]);
+                $contextcount = course_context_inventory::append($reportid, (int) $old->id,
+                    (int) $old->courseid);
                 $DB->update_record('local_filexray_course', (object) [
                     'id' => $old->id, 'status' => 'pending',
-                    'filecount' => 0, 'timestarted' => 0, 'timefinished' => 0,
+                    'filecount' => $contextcount, 'timestarted' => 0, 'timefinished' => 0,
                     'errormessage' => null,
                 ]);
             }
@@ -100,22 +102,26 @@ final class runner {
                 $DB->set_field('local_filexray_report', 'timestarted', $now, ['id' => $reportid]);
             }
 
-            $DB->delete_records('local_filexray_file', ['reportcourseid' => $row->id]);
             try {
-                $count = backup_inventory::inspect($reportid, (int) $row->id,
+                // Keep the files already recorded synchronously during report creation.
+                backup_inventory::inspect($reportid, (int) $row->id,
                     (int) $row->courseid, (int) $report->userid);
-                // Complete the backup references with files stored in course and activity contexts.
-                $count += course_context_inventory::append($reportid, (int) $row->id,
+                // Include files created after the initial snapshot as well.
+                course_context_inventory::append($reportid, (int) $row->id,
                     (int) $row->courseid);
+                $count = $DB->count_records("local_filexray_file", ["reportcourseid" => $row->id]);
                 $DB->update_record('local_filexray_course', (object) [
                     'id' => $row->id, 'status' => 'completed',
                     'filecount' => $count, 'timefinished' => time(), 'errormessage' => null,
                 ]);
             } catch (Throwable $e) {
+                // Discard incomplete backup data, but keep the context inventory available.
                 $DB->delete_records('local_filexray_file', ['reportcourseid' => $row->id]);
+                $contextcount = course_context_inventory::append($reportid, (int) $row->id,
+                    (int) $row->courseid);
                 $DB->update_record('local_filexray_course', (object) [
                     'id' => $row->id, 'status' => 'failed',
-                    'filecount' => 0, 'timefinished' => time(),
+                    'filecount' => $contextcount, 'timefinished' => time(),
                     'errormessage' => core_text::substr($e->getMessage(), 0, 2000),
                 ]);
                 debugging('File X-Ray inventory failed for course ' . $row->courseid . ': ' .

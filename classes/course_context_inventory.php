@@ -29,6 +29,52 @@ namespace local_filexray;
  */
 final class course_context_inventory {
     /**
+     * Persist all current course and module context files while creating the report.
+     *
+     * The report and its course rows already exist within the creation transaction.
+     * Bulk SQL keeps the initial snapshot affordable on sites with large files tables.
+     *
+     * @param int $reportid New report identifier.
+     * @return void
+     */
+    public static function populate_report(int $reportid): void {
+        global $DB;
+
+        $sources = [
+            ["modulejoin" => "", "instance" => "rc.courseid", "level" => CONTEXT_COURSE],
+            ["modulejoin" => "JOIN {course_modules} cm ON cm.course = rc.courseid",
+                "instance" => "cm.id", "level" => CONTEXT_MODULE],
+        ];
+        foreach ($sources as $source) {
+            $sql = "INSERT INTO {local_filexray_file}
+                           (reportid, reportcourseid, courseid, fileid, contenthash,
+                            filesize, contextid, component, filearea, filename)
+                    SELECT rc.reportid, rc.id, rc.courseid, f.id, f.contenthash,
+                           f.filesize, f.contextid, f.component, f.filearea, f.filename
+                      FROM {local_filexray_course} rc
+                      {$source["modulejoin"]}
+                      JOIN {context} ctx ON ctx.contextlevel = :contextlevel
+                                        AND ctx.instanceid = {$source["instance"]}
+                      JOIN {files} f ON f.contextid = ctx.id
+                     WHERE rc.reportid = :reportid";
+            $DB->execute($sql, ["contextlevel" => $source["level"], "reportid" => $reportid]);
+        }
+
+        // File counts must already be available before an ad-hoc backup task starts.
+        $counts = $DB->get_records_sql(
+            "SELECT reportcourseid AS id, COUNT(*) AS filecount
+               FROM {local_filexray_file}
+              WHERE reportid = :reportid
+           GROUP BY reportcourseid",
+            ["reportid" => $reportid]
+        );
+        foreach ($counts as $row) {
+            $DB->set_field("local_filexray_course", "filecount", (int) $row->filecount,
+                ["id" => $row->id]);
+        }
+    }
+
+    /**
      * Append files owned by the course and its course modules, without duplicating backup references.
      *
      * Read files as metadata only; no stored-file content is copied or changed.

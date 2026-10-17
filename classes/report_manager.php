@@ -85,6 +85,8 @@ final class report_manager {
                 } finally {
                     $rs->close();
                 }
+                // Snapshot files immediately; the cron will later add backup-only references.
+                course_context_inventory::populate_report($id);
                 $DB->update_record('local_filexray_report', (object) [
                     'id' => $id, 'totalcourses' => $count,
                     'status' => $count ? 'queued' : 'completed',
@@ -204,10 +206,12 @@ final class report_manager {
         ], 'id ASC', 'id');
         foreach ($failed as $row) {
             $DB->delete_records('local_filexray_file', ['reportcourseid' => $row->id]);
+            $contextcount = course_context_inventory::append($reportid, (int) $row->id,
+                (int) $row->courseid);
             $DB->update_record('local_filexray_course', (object) [
                 'id' => $row->id,
                 'status' => 'pending',
-                'filecount' => 0,
+                'filecount' => $contextcount,
                 'timestarted' => 0,
                 'timefinished' => 0,
                 'errormessage' => null,

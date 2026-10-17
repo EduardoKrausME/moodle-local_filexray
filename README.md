@@ -11,11 +11,11 @@ The source includes a public overview, installation, native backup inspection, r
 ## Workflow
 
 1. Open **Site administration → Reports → File X-Ray** and select **Generate report**.
-2. File X-Ray snapshots each ordinary Moodle course into one row of `local_filexray_course` and creates a parent `local_filexray_report`.
-3. An ad-hoc cron task inventories **one course at a time**. A report-level lock prevents parallel work on the same report and the worker queues the next course after completing the previous one.
+2. File X-Ray creates `local_filexray_report`, snapshots each ordinary Moodle course into `local_filexray_course` and immediately inserts file metadata from course and activity contexts into `local_filexray_file` in the same creation transaction. This synchronous SQL snapshot is committed before returning the new report ID.
+3. An ad-hoc cron task adds native backup references **one course at a time**. A report-level lock prevents parallel work on the same report and the worker queues the next course after completing the previous one.
 4. The browser polls progress over Moodle's authenticated `core/ajax`, displaying progress, errors and the 50 courses on the selected page. Closing the tab does not stop cron.
 5. Each course's final backup `filefinal` references are captured before Moodle's `fileslist` step. This skips the physical copy, MBZ zip and destination-storage steps.
-6. The same background worker also looks up `mdl_files` records belonging to the course context and all of its `course_modules` contexts. Files absent from the native backup inventory are appended to `local_filexray_file`, deduplicated by file ID within each report/course.
+6. The creation request bulk-loads `mdl_files` records belonging to the course context and all of its `course_modules` contexts before cron starts. The worker then supplements these records with backup-only references and adds any context files created after report creation, deduplicated by file ID within each report/course.
 7. **Compare with mdl_files** lists file records not encountered by this combined inventory. These are **not automatically orphaned**: system/user files, other Moodle features and plugins without complete backup support can reference them.
 
 ## Performance: excluding learner data
@@ -30,9 +30,9 @@ In **Site administration → Plugins → Local plugins → File X-Ray**, enable 
 * `local_filexray_course` — one course job per report, with timestamps/errors/counts.
 * `local_filexray_file` — file record ID, content hash and related metadata for a given course and report.
 * `classes/backup_inventory.php` — runs Moodle's general backup plan through the final annotation migration, but deliberately stops **before** `backup_final_files_structure_step` (`fileslist`), which would otherwise copy files.
-* `classes/course_context_inventory.php` — adds file metadata for the course and activity context IDs, including file areas overlooked by backup plugins, without inserting an existing report/course file ID twice.
+* `classes/course_context_inventory.php` — bulk-inserts all course and activity context file metadata on report creation; later appends new context files without duplicating existing report/course file IDs.
 * `classes/task/process_course.php` — one task per course, chaining the next job on cron.
-* `classes/report_manager.php` — immutable course snapshot and paginated live progress.
+* `classes/report_manager.php` — creates the initial course/file snapshot in a database transaction and provides paginated live progress.
 
 **Requirements** — Moodle 4.5 or later, PHP compatible with the Moodle instance, working Moodle cron, site management permissions.
 
@@ -44,7 +44,7 @@ This implementation combines file references resolved by Moodle backup with file
 
 A failed course makes the entire comparison provisional. Reports keep the original list of courses, even if courses are removed after the report was created. A report whose cron worker died can be resumed by selecting **Resume pending courses**; a still-running row is reclaimed only after two hours and after obtaining the exclusive report lock.
 
-For a very large site, calculate disk occupancy separately by **distinct contenthash**, not by summing logical file-record sizes. Do not delete anything on the basis of this report alone.
+The initial context lookup is synchronous: creating a report may take longer on sites with large numbers of files, although it uses two database-side `INSERT ... SELECT` operations rather than inserting every file from PHP. For a very large site, calculate disk occupancy separately by **distinct contenthash**, not by summing logical file-record sizes. Do not delete anything on the basis of this report alone.
 
 ## CLI
 

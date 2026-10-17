@@ -47,7 +47,7 @@ final class backup_inventory {
      * @param int $reportcourseid Snapshot row ID.
      * @param int $courseid Moodle course ID.
      * @param int $userid Backup operator.
-     * @return int Number of referenced file records.
+     * @return int Number of newly inserted backup file references.
      */
     public static function inspect(int $reportid, int $reportcourseid, int $courseid, int $userid): int {
         global $CFG, $DB;
@@ -103,12 +103,21 @@ final class backup_inventory {
             }
 
             // Filefinal is exactly the set selected for files.xml by Moodle.
+            // Course/module files already captured during report creation must not be inserted twice.
             $sql = "SELECT DISTINCT f.id AS fileid, f.contenthash, f.filesize, f.contextid,
                            f.component, f.filearea, f.filename
                       FROM {files} f
                       JOIN {backup_ids_temp} bi ON bi.itemid = f.id
-                     WHERE bi.backupid = :backupid AND bi.itemname = :itemname";
-            $rs = $DB->get_recordset_sql($sql, ['backupid' => $backupid, 'itemname' => 'filefinal']);
+                     WHERE bi.backupid = :backupid AND bi.itemname = :itemname
+                       AND NOT EXISTS (
+                           SELECT 1 FROM {local_filexray_file} fx
+                            WHERE fx.reportcourseid = :reportcourseid AND fx.fileid = f.id
+                       )";
+            $rs = $DB->get_recordset_sql($sql, [
+                "backupid" => $backupid,
+                "itemname" => "filefinal",
+                "reportcourseid" => $reportcourseid,
+            ]);
             $count = 0;
             try {
                 foreach ($rs as $file) {

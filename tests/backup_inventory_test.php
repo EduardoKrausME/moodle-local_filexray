@@ -59,7 +59,11 @@ final class backup_inventory_test extends advanced_testcase {
         $count = backup_inventory::inspect($reportid, (int) $snapshot->id,
             (int) $course->id, (int) get_admin()->id);
 
-        $this->assertGreaterThanOrEqual(1, $count);
+        // The summary file is preloaded at report creation; backup must not duplicate it.
+        $this->assertIsInt($count);
+        $this->assertSame(1, $DB->count_records("local_filexray_file", [
+            "reportcourseid" => $snapshot->id, "fileid" => $storedfile->get_id(),
+        ]));
         $this->assertTrue($DB->record_exists('local_filexray_file', [
             'reportcourseid' => $snapshot->id,
             'fileid' => $storedfile->get_id(),
