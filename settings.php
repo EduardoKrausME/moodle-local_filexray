@@ -37,7 +37,7 @@ if ($hassiteconfig) {
         "local_filexray/skipuserdata",
         get_string("skipuserdata", "local_filexray"),
         get_string("skipuserdata_desc", "local_filexray"),
-        0
+        1
     ));
     $ADMIN->add('localplugins', $settings);
 
