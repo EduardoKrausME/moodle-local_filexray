@@ -41,7 +41,6 @@ if ($hassiteconfig) {
     ));
     $ADMIN->add('localplugins', $settings);
 
-
     $ADMIN->add('reports', new admin_externalpage(
         'local_filexray',
         get_string('pluginname', 'local_filexray'),
