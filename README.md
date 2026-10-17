@@ -4,7 +4,7 @@ File X-Ray audits which records in Moodle's `files` table are selected by each c
 
 ## Documentation
 
-The bilingual documentation site uses the same visual layout as [Moodle MCP documentation](https://github.com/EduardoKrausME/moodle-local_mcp/tree/master/docs), adapted for File X-Ray. Browse [Portuguese](docs/pt_br/index.html) or [English](docs/en/index.html) pages in this repository, or publish the `docs/` directory using GitHub Pages.
+The bilingual documentation site uses the same visual layout as [Moodle MCP documentation](https://eduardokrausme.github.io/moodle-local_mcp/), adapted for File X-Ray. Browse [Portuguese](docs/pt_br/index.html) or [English](docs/en/index.html) pages in this repository, or publish the `docs/` directory using GitHub Pages.
 
 The source includes a public overview, installation, native backup inspection, report processing, per-course comparison, file-area explanations, security limits and privacy information. It does not imply that files outside course inventories are safe to delete.
 
@@ -95,7 +95,7 @@ Documentos Office (`.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx`, formatos O
 
 ## Optional integration with Moodle MCP
 
-When [local_mcp](https://github.com/EduardoKrausME/moodle-local_mcp) is installed and enabled, it automatically discovers `classes/mcp/provider.php` in File X-Ray. Neither plugin needs a hard dependency, a changed `lib.php`, a database migration, or a modification to the MCP plugin.
+When [local_mcp](https://eduardokrausme.github.io/moodle-local_mcp/) is installed and enabled, it automatically discovers `classes/mcp/provider.php` in File X-Ray. Neither plugin needs a hard dependency, a changed `lib.php`, a database migration, or a modification to the MCP plugin.
 
 READ tools: `filexray_list_reports`, `filexray_report_status`, `filexray_list_course_files`, `filexray_get_comparison` and `filexray_list_unmatched_files`. They require `local/filexray:view` in the system context, return only file metadata (no raw data or public download URLs), and paginate course and file lists with a maximum of 100 entries.
 
