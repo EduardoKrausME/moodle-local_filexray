@@ -48,29 +48,51 @@
         </div>
     </div>
     <div class="row filexray-charts mb-4">
-        <div class="col-12 col-lg-5 mb-3">
+        <div class="col-12 col-xl-7 mb-3">
             <section class="card filexray-chart h-100" aria-labelledby="filexray-chart-coverage">
                 <div class="card-body">
                     <h3 class="h5" id="filexray-chart-coverage">{{#str}}chartcoverage, local_filexray{{/str}}</h3>
                     <p class="text-muted small">{{#str}}chartcoverage_note, local_filexray{{/str}}</p>
-                    {{#chart_has_files}}
-                        <div class="filexray-chart-donut" aria-hidden="true" style="--filexray-chart-match: {{chartmatchedpercent}}%; --filexray-chart-other-end: {{chartclassifiedendpercent}}%;">
-                            <div class="filexray-chart-donut-hole">
-                                <strong>{{chartmatchedpercentlabel}}</strong>
-                                <span>{{#str}}chartininventory, local_filexray{{/str}}</span>
-                            </div>
+                    <div class="filexray-chart-coverage-grid">
+                        <div>
+                            <h4 class="h6 text-center">{{#str}}chartcoveragefiles, local_filexray{{/str}}</h4>
+                            {{#chart_has_files}}
+                                <div class="filexray-chart-donut" aria-hidden="true" style="--filexray-chart-match: {{chartmatchedpercent}}%; --filexray-chart-other-end: {{chartclassifiedendpercent}}%;">
+                                    <div class="filexray-chart-donut-hole">
+                                        <strong>{{chartmatchedpercentlabel}}</strong>
+                                        <span>{{#str}}chartininventory, local_filexray{{/str}}</span>
+                                    </div>
+                                </div>
+                                <ul class="filexray-chart-legend">
+                                    <li><span class="filexray-chart-swatch filexray-chart-swatch--matched"></span><span>{{#str}}chartininventory, local_filexray{{/str}}</span><strong>{{matchedformatted}}</strong></li>
+                                    <li><span class="filexray-chart-swatch filexray-chart-swatch--classified"></span><span>{{#str}}chartotherareas, local_filexray{{/str}}</span><strong>{{chartclassifiedformatted}}</strong></li>
+                                    <li><span class="filexray-chart-swatch filexray-chart-swatch--unmatched"></span><span>{{#str}}chartresidual, local_filexray{{/str}}</span><strong>{{unmatchedformatted}}</strong></li>
+                                </ul>
+                            {{/chart_has_files}}
+                            {{^chart_has_files}}<p>{{#str}}chartnodata, local_filexray{{/str}}</p>{{/chart_has_files}}
                         </div>
-                        <ul class="filexray-chart-legend">
-                            <li><span class="filexray-chart-swatch filexray-chart-swatch--matched"></span><span>{{#str}}chartininventory, local_filexray{{/str}}</span><strong>{{matchedformatted}}</strong></li>
-                            <li><span class="filexray-chart-swatch filexray-chart-swatch--classified"></span><span>{{#str}}chartotherareas, local_filexray{{/str}}</span><strong>{{chartclassifiedformatted}}</strong></li>
-                            <li><span class="filexray-chart-swatch filexray-chart-swatch--unmatched"></span><span>{{#str}}chartresidual, local_filexray{{/str}}</span><strong>{{unmatchedformatted}}</strong></li>
-                        </ul>
-                    {{/chart_has_files}}
-                    {{^chart_has_files}}<p>{{#str}}chartnodata, local_filexray{{/str}}</p>{{/chart_has_files}}
+                        <div>
+                            <h4 class="h6 text-center">{{#str}}chartcoveragebytes, local_filexray{{/str}}</h4>
+                            {{#chart_has_bytes}}
+                                <div class="filexray-chart-donut" aria-hidden="true" style="--filexray-chart-match: {{chartmatchedbytespercent}}%; --filexray-chart-other-end: {{chartclassifiedbytesendpercent}}%;">
+                                    <div class="filexray-chart-donut-hole">
+                                        <strong>{{chartmatchedbytespercentlabel}}</strong>
+                                        <span>{{#str}}chartininventory, local_filexray{{/str}}</span>
+                                    </div>
+                                </div>
+                                <ul class="filexray-chart-legend">
+                                    <li><span class="filexray-chart-swatch filexray-chart-swatch--matched"></span><span>{{#str}}chartininventory, local_filexray{{/str}}</span><strong>{{chartmatchedbytesformatted}}</strong></li>
+                                    <li><span class="filexray-chart-swatch filexray-chart-swatch--classified"></span><span>{{#str}}chartotherareas, local_filexray{{/str}}</span><strong>{{chartclassifiedbytesformatted}}</strong></li>
+                                    <li><span class="filexray-chart-swatch filexray-chart-swatch--unmatched"></span><span>{{#str}}chartresidual, local_filexray{{/str}}</span><strong>{{chartunmatchedbytesformatted}}</strong></li>
+                                </ul>
+                            {{/chart_has_bytes}}
+                            {{^chart_has_bytes}}<p>{{#str}}chartnodata, local_filexray{{/str}}</p>{{/chart_has_bytes}}
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
-        <div class="col-12 col-lg-7 mb-3">
+        <div class="col-12 col-xl-5 mb-3">
             <section class="card filexray-chart h-100" aria-labelledby="filexray-chart-courses">
                 <div class="card-body">
                     <h3 class="h5" id="filexray-chart-courses">{{#str}}charttopcourses, local_filexray{{/str}}</h3>
@@ -81,7 +103,7 @@
                                 <li>
                                     <div class="filexray-chart-course-heading">
                                         <a href="{{{url}}}">{{{coursename}}} (#{{courseid}})</a>
-                                        <strong>{{formattedfilecount}}</strong>
+                                        <strong>{{formattedbytes}}</strong>
                                     </div>
                                     <div class="filexray-chart-bar-track" aria-hidden="true">
                                         <div class="filexray-chart-bar" style="width: {{chartwidth}}%;"></div>

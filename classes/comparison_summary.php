@@ -74,6 +74,121 @@ final class comparison_summary {
     }
 
     /**
+     * Count records and logical bytes in three exclusive coverage groups.
+     *
+     * Inventory references are deduplicated by Moodle file ID, because the
+     * same stored file may belong to several course inventories.
+     *
+     * @param int $reportid Inventory report ID.
+     * @return array Counts and logical bytes for each group.
+     */
+    public static function coverage(int $reportid): array {
+        global $DB;
+
+        $total = $DB->get_record_sql(
+            "SELECT COUNT(*) AS filecount, COALESCE(SUM(filesize), 0) AS bytecount
+               FROM {files}
+              WHERE filename <> :directory",
+            ["directory" => "."]
+        );
+        $matched = $DB->get_record_sql(
+            "SELECT COUNT(*) AS filecount, COALESCE(SUM(f.filesize), 0) AS bytecount
+               FROM {files} f
+               JOIN (SELECT DISTINCT fileid FROM {local_filexray_file}
+                      WHERE reportid = :reportid) selected ON selected.fileid = f.id
+              WHERE f.filename <> :directory",
+            ["reportid" => $reportid, "directory" => "."]
+        );
+        [$condition, $params] = self::unmatched_condition($reportid);
+        $unmatched = $DB->get_record_sql(
+            "SELECT COUNT(*) AS filecount, COALESCE(SUM(f.filesize), 0) AS bytecount
+               FROM {files} f
+              WHERE " . $condition,
+            $params
+        );
+
+        $totalfiles = (int) $total->filecount;
+        $totalbytes = (int) $total->bytecount;
+        $matchedfiles = (int) $matched->filecount;
+        $matchedbytes = (int) $matched->bytecount;
+        $unmatchedfiles = (int) $unmatched->filecount;
+        $unmatchedbytes = (int) $unmatched->bytecount;
+        return [
+            "totalfiles" => $totalfiles,
+            "totalbytes" => $totalbytes,
+            "matchedfiles" => $matchedfiles,
+            "matchedbytes" => $matchedbytes,
+            "unmatchedfiles" => $unmatchedfiles,
+            "unmatchedbytes" => $unmatchedbytes,
+            "classifiedfiles" => max(0, $totalfiles - $matchedfiles - $unmatchedfiles),
+            "classifiedbytes" => max(0, $totalbytes - $matchedbytes - $unmatchedbytes),
+        ];
+    }
+
+    /**
+     * Rank the largest course inventories on the current page by logical bytes.
+     *
+     * @param array $courses Current page of course summary rows.
+     * @return array At most five entries with chart widths and readable sizes.
+     */
+    public static function top_courses(array $courses): array {
+        usort($courses, static function(array $first, array $second): int {
+            return ($second["bytecount"] <=> $first["bytecount"])
+                ?: ($second["filecount"] <=> $first["filecount"])
+                ?: ($first["courseid"] <=> $second["courseid"]);
+        });
+        $top = array_slice($courses, 0, 5);
+        $maxbytes = $top ? max(array_column($top, "bytecount")) : 0;
+        foreach ($top as &$course) {
+            $course["chartwidth"] = $maxbytes > 0
+                ? round(100 * $course["bytecount"] / $maxbytes, 1) : 0;
+            $course["formattedbytes"] = display_size($course["bytecount"]);
+        }
+        unset($course);
+        return $top;
+    }
+
+    /**
+     * Group a saved course inventory by component, without directory entries.
+     *
+     * @param int $coursejobid Saved inventory job ID.
+     * @return array Components sorted by logical byte count.
+     */
+    public static function course_components(int $coursejobid): array {
+        global $DB;
+
+        $records = $DB->get_records_sql(
+            "SELECT component, COUNT(*) AS filecount, COALESCE(SUM(filesize), 0) AS bytecount
+               FROM {local_filexray_file}
+              WHERE reportcourseid = :courseid AND filename <> :directory
+           GROUP BY component
+           ORDER BY bytecount DESC, component ASC",
+            ["courseid" => $coursejobid, "directory" => "."]
+        );
+        $result = [];
+        $maxfiles = 0;
+        $maxbytes = 0;
+        foreach ($records as $record) {
+            $maxfiles = max($maxfiles, (int) $record->filecount);
+            $maxbytes = max($maxbytes, (int) $record->bytecount);
+        }
+        foreach ($records as $record) {
+            $filecount = (int) $record->filecount;
+            $bytes = (int) $record->bytecount;
+            $result[] = [
+                "component" => $record->component,
+                "filecount" => $filecount,
+                "bytecount" => $bytes,
+                "formattedfilecount" => number_format($filecount, 0, ",", "."),
+                "size" => display_size($bytes),
+                "fileswidth" => $maxfiles > 0 ? round(100 * $filecount / $maxfiles, 1) : 0,
+                "byteswidth" => $maxbytes > 0 ? round(100 * $bytes / $maxbytes, 1) : 0,
+            ];
+        }
+        return $result;
+    }
+
+    /**
      * Escape course names while retaining only the explicit multilang spans.
      *
      * Original course fullnames can contain HTML; the template intentionally

@@ -477,4 +477,125 @@ final class comparison_summary_test extends advanced_testcase {
         }
     }
 
+
+    /**
+     * A file inventoried by two courses contributes bytes only once to coverage.
+     */
+    public function test_coverage_counts_distinct_files_and_logical_bytes(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $first = $this->getDataGenerator()->create_course();
+        $second = $this->getDataGenerator()->create_course();
+        $reportid = report_manager::create((int) get_admin()->id);
+        $storage = get_file_storage();
+        $selected = $storage->create_file_from_string([
+            "contextid" => context_system::instance()->id,
+            "component" => "mod_resource",
+            "filearea" => "content",
+            "itemid" => 994,
+            "filepath" => "/",
+            "filename" => "selected-coverage.txt",
+        ], str_repeat("a", 11));
+        $storage->create_file_from_string([
+            "contextid" => context_system::instance()->id,
+            "component" => "user",
+            "filearea" => "draft",
+            "itemid" => 995,
+            "filepath" => "/",
+            "filename" => "classified-coverage.txt",
+        ], str_repeat("b", 19));
+        $storage->create_file_from_string([
+            "contextid" => context_system::instance()->id,
+            "component" => "mod_resource",
+            "filearea" => "content",
+            "itemid" => 996,
+            "filepath" => "/",
+            "filename" => "residual-coverage.txt",
+        ], str_repeat("c", 29));
+        foreach ([$first, $second] as $course) {
+            $job = $DB->get_record("local_filexray_course",
+                ["reportid" => $reportid, "courseid" => $course->id], "*", MUST_EXIST);
+            $DB->insert_record("local_filexray_file", (object) [
+                "reportid" => $reportid,
+                "reportcourseid" => $job->id,
+                "courseid" => $course->id,
+                "fileid" => $selected->get_id(),
+                "contenthash" => $selected->get_contenthash(),
+                "filesize" => $selected->get_filesize(),
+                "contextid" => $selected->get_contextid(),
+                "component" => $selected->get_component(),
+                "filearea" => $selected->get_filearea(),
+                "filename" => $selected->get_filename(),
+            ]);
+        }
+        $coverage = comparison_summary::coverage($reportid);
+        $this->assertSame(1, $coverage["matchedfiles"]);
+        $this->assertSame(11, $coverage["matchedbytes"]);
+        $this->assertGreaterThanOrEqual(19, $coverage["classifiedbytes"]);
+        $this->assertGreaterThanOrEqual(29, $coverage["unmatchedbytes"]);
+        $this->assertSame($coverage["totalfiles"],
+            $coverage["matchedfiles"] + $coverage["classifiedfiles"] + $coverage["unmatchedfiles"]);
+        $this->assertSame($coverage["totalbytes"],
+            $coverage["matchedbytes"] + $coverage["classifiedbytes"] + $coverage["unmatchedbytes"]);
+    }
+
+    /**
+     * Top courses must be ranked and scaled by bytes, not file count.
+     */
+    public function test_top_courses_rank_by_bytes(): void {
+        $courses = [
+            ["courseid" => 1, "filecount" => 100, "bytecount" => 5],
+            ["courseid" => 2, "filecount" => 2, "bytecount" => 1000],
+            ["courseid" => 3, "filecount" => 3, "bytecount" => 500],
+        ];
+        $top = comparison_summary::top_courses($courses);
+        $this->assertSame([2, 3, 1], array_column($top, "courseid"));
+        $this->assertEquals(100, $top[0]["chartwidth"]);
+        $this->assertEquals(50, $top[1]["chartwidth"]);
+        $this->assertArrayHasKey("formattedbytes", $top[0]);
+    }
+
+    /**
+     * Per-course component totals exclude directories and preserve logical bytes.
+     */
+    public function test_course_components_group_inventory_records(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $course = $this->getDataGenerator()->create_course();
+        $reportid = report_manager::create((int) get_admin()->id);
+        $job = $DB->get_record("local_filexray_course",
+            ["reportid" => $reportid, "courseid" => $course->id], "*", MUST_EXIST);
+        foreach ([
+            ["mod_resource", "one.txt", 10],
+            ["mod_resource", "two.txt", 25],
+            ["core_h5p", "three.h5p", 200],
+            ["core_h5p", ".", 0],
+        ] as $i => [$component, $filename, $bytes]) {
+            $DB->insert_record("local_filexray_file", (object) [
+                "reportid" => $reportid,
+                "reportcourseid" => $job->id,
+                "courseid" => $course->id,
+                "fileid" => 990001 + $i,
+                "contenthash" => str_repeat("b", 40),
+                "filesize" => $bytes,
+                "contextid" => context_course::instance($course->id)->id,
+                "component" => $component,
+                "filearea" => "content",
+                "filename" => $filename,
+            ]);
+        }
+        $components = comparison_summary::course_components((int) $job->id);
+        $this->assertCount(2, $components);
+        $this->assertSame("core_h5p", $components[0]["component"]);
+        $this->assertSame(200, $components[0]["bytecount"]);
+        $this->assertSame(1, $components[0]["filecount"]);
+        $this->assertSame("mod_resource", $components[1]["component"]);
+        $this->assertSame(35, $components[1]["bytecount"]);
+        $this->assertSame(2, $components[1]["filecount"]);
+        $this->assertEquals(100, $components[0]["byteswidth"]);
+    }
 }

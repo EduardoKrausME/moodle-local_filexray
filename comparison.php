@@ -40,19 +40,11 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('comparison', 'local_filexray'));
 $PAGE->set_heading(get_string('comparison', 'local_filexray'));
 
-// Keep the card count consistent with the dedicated residual-files page.
-[$where, $params] = comparison_summary::unmatched_condition($id);
-$total = (int) $DB->count_records_select('files', "filename <> :dir", ['dir' => '.']);
-$matched = (int) $DB->count_records_sql(
-    "SELECT COUNT(DISTINCT f.id)
-       FROM {local_filexray_file} fx
-       JOIN {files} f ON f.id = fx.fileid
-      WHERE fx.reportid = :rid AND f.filename <> :dir",
-    ['rid' => $id, 'dir' => '.']
-);
-$unmatched = (int) $DB->count_records_sql(
-    "SELECT COUNT(*) FROM {files} f WHERE " . $where, $params
-);
+// One shared classification is used for the file-count and logical-byte charts.
+$coverage = comparison_summary::coverage($id);
+$total = $coverage["totalfiles"];
+$matched = $coverage["matchedfiles"];
+$unmatched = $coverage["unmatchedfiles"];
 // Course totals come from saved backup and context inventories, not a live context lookup.
 $coursepagesize = 50;
 $allcoursecount = $DB->count_records("local_filexray_course", ["reportid" => $id]);
@@ -80,25 +72,17 @@ foreach ($areas as &$area) {
 }
 unset($area);
 
-// These groups are mutually exclusive subsets of the current Moodle files table.
-$classified = max(0, $total - $matched - $unmatched);
+// Both distributions have the same exclusive groups, measured independently.
+$classified = $coverage["classifiedfiles"];
 $matchedpercent = $total ? 100 * $matched / $total : 0;
 $classifiedendpercent = $total ? 100 * ($matched + $classified) / $total : 0;
+$totalbytes = $coverage["totalbytes"];
+$matchedbytespercent = $totalbytes ? 100 * $coverage["matchedbytes"] / $totalbytes : 0;
+$classifiedbytesendpercent = $totalbytes
+    ? 100 * ($coverage["matchedbytes"] + $coverage["classifiedbytes"]) / $totalbytes : 0;
 
-// Compare the most populated courses on the currently displayed page only.
-$topcourses = $courses;
-usort($topcourses, static function(array $first, array $second): int {
-    return ($second["filecount"] <=> $first["filecount"])
-        ?: ($first["courseid"] <=> $second["courseid"]);
-});
-$topcourses = array_slice($topcourses, 0, 5);
-$maxcoursefiles = $topcourses ? max(array_column($topcourses, "filecount")) : 0;
-foreach ($topcourses as &$topcourse) {
-    $topcourse["chartwidth"] = $maxcoursefiles
-        ? round(100 * $topcourse["filecount"] / $maxcoursefiles, 1) : 0;
-    $topcourse["formattedfilecount"] = number_format($topcourse["filecount"], 0, ",", ".");
-}
-unset($topcourse);
+// Rank courses on this page by the logical bytes in their saved inventories.
+$topcourses = comparison_summary::top_courses($courses);
 
 $unmatchedurl = (new moodle_url("/local/filexray/unmatched.php", ["id" => $id]))->out(false);
 $settingsurl = (new moodle_url("/admin/settings.php", [
@@ -113,11 +97,18 @@ $data = [
     "settingsurl" => $settingsurl,
     "provisional" => $report->status !== "completed",
     "chart_has_files" => $total > 0,
-    "chart_has_courses" => $maxcoursefiles > 0,
+    "chart_has_bytes" => $totalbytes > 0,
+    "chart_has_courses" => !empty($topcourses) && $topcourses[0]["bytecount"] > 0,
     "chartmatchedpercent" => number_format($matchedpercent, 2, ".", ""),
     "chartclassifiedendpercent" => number_format($classifiedendpercent, 2, ".", ""),
     "chartmatchedpercentlabel" => number_format($matchedpercent, 1, ",", ".") . "%",
     "chartclassifiedformatted" => number_format($classified, 0, ",", "."),
+    "chartmatchedbytespercent" => number_format($matchedbytespercent, 2, ".", ""),
+    "chartclassifiedbytesendpercent" => number_format($classifiedbytesendpercent, 2, ".", ""),
+    "chartmatchedbytespercentlabel" => number_format($matchedbytespercent, 1, ",", ".") . "%",
+    "chartmatchedbytesformatted" => display_size($coverage["matchedbytes"]),
+    "chartclassifiedbytesformatted" => display_size($coverage["classifiedbytes"]),
+    "chartunmatchedbytesformatted" => display_size($coverage["unmatchedbytes"]),
     "topcourses" => $topcourses,
     'courses' => $courses,
     'coursecount' => $coursecount,

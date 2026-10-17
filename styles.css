@@ -173,3 +173,105 @@
     background: #267d99;
     border-radius: inherit;
 }
+
+/* File and logical-byte coverage use separate donuts with the same categories. */
+.local-filexray-comparison .filexray-chart-coverage-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.local-filexray-comparison .filexray-chart-coverage-grid > div {
+    min-width: 0;
+}
+
+@media (max-width: 650px) {
+    .local-filexray-comparison .filexray-chart-coverage-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Per-course component charts are interactive links to server-side filtered files. */
+.local-filexray-course .filexray-chart {
+    border: 1px solid rgba(65, 85, 120, .16);
+    border-radius: .8rem;
+    box-shadow: 0 6px 20px rgba(23, 43, 77, .05);
+}
+
+.local-filexray-course .filexray-chart .card-body {
+    display: flex;
+    flex-direction: column;
+    padding: 1.4rem;
+}
+
+.local-filexray-course .filexray-component-filter {
+    padding: .75rem 1rem;
+    background: var(--bs-secondary-bg, #e8edf4);
+    border-radius: .5rem;
+}
+
+.local-filexray-course .filexray-component-list {
+    padding: 0;
+    margin: .5rem 0 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.local-filexray-course .filexray-component-link {
+    display: block;
+    padding: .65rem .75rem;
+    border: 1px solid transparent;
+    border-radius: .6rem;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+.local-filexray-course .filexray-component-link:hover,
+.local-filexray-course .filexray-component-link:focus-visible {
+    background: var(--bs-secondary-bg, #e8edf4);
+    border-color: #267d99;
+    color: inherit;
+    text-decoration: none;
+}
+
+.local-filexray-course .filexray-component-link--active {
+    border-color: #267d99;
+    background: var(--bs-secondary-bg, #e8edf4);
+}
+
+.local-filexray-course .filexray-component-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .8rem;
+    margin-bottom: .45rem;
+    font-size: .875rem;
+}
+
+.local-filexray-course .filexray-component-heading > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.local-filexray-course .filexray-component-heading strong {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.local-filexray-course .filexray-chart-bar-track {
+    display: block;
+    height: .8rem;
+    border-radius: .5rem;
+    overflow: hidden;
+    background: var(--bs-secondary-bg, #e8edf4);
+}
+
+.local-filexray-course .filexray-chart-bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #267d99;
+}
