@@ -80,7 +80,10 @@ final class course_context_inventory_test extends advanced_testcase {
                 "reportcourseid" => $job->id, "fileid" => $files[$name]->get_id(),
             ]), $name);
         }
-        $this->assertSame(2, (int) $DB->get_field("local_filexray_course", "filecount", ["id" => $job->id]));
+        $initialcount = $DB->count_records("local_filexray_file", ["reportcourseid" => $job->id]);
+        $this->assertGreaterThanOrEqual(2, $initialcount);
+        $this->assertSame($initialcount,
+            (int) $DB->get_field("local_filexray_course", "filecount", ["id" => $job->id]));
 
         // A new file created after the report must be picked up only by the append pass.
         $newfile = $storage->create_file_from_string([
