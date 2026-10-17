@@ -278,6 +278,7 @@ final class report_manager {
                 'id' => (int) $row->id, 'courseid' => (int) $row->courseid,
                 'name' => $row->coursename, 'status' => $row->status,
                 'filecount' => (int) $row->filecount,
+                "formattedfilecount" => number_format((int) $row->filecount, 0, ",", "."),
                 "bytecount" => $bytecount, "size" => display_size($bytecount),
                 'error' => (string) ($row->errormessage ?? ''),
                 'started' => (int) $row->timestarted, 'finished' => (int) $row->timefinished,

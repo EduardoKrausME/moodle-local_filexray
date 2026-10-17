@@ -162,10 +162,15 @@ final class report_manager_test extends advanced_testcase {
             );
             $this->assertSame($expected, $courses[$job->courseid]["bytecount"]);
             $this->assertSame(display_size($expected), $courses[$job->courseid]["size"]);
+            $this->assertSame(
+                number_format($courses[$job->courseid]["filecount"], 0, ",", "."),
+                $courses[$job->courseid]["formattedfilecount"]
+            );
         }
 
         $page = report_manager::status($reportid, 0, 1);
         $this->assertCount(1, $page["courses"]);
+        $this->assertArrayHasKey("formattedfilecount", $page["courses"][0]);
         $this->assertArrayHasKey("bytecount", $page["courses"][0]);
         $this->assertArrayHasKey("size", $page["courses"][0]);
     }

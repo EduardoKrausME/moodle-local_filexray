@@ -93,6 +93,7 @@ final class report_status extends external_api {
                 'name' => new external_value(PARAM_TEXT, 'Course full name'),
                 'status' => new external_value(PARAM_ALPHANUMEXT, 'Course status'),
                 'filecount' => new external_value(PARAM_INT, 'Referenced files'),
+                "formattedfilecount" => new external_value(PARAM_TEXT, "Formatted referenced file count"),
                 "bytecount" => new external_value(PARAM_INT, "Referenced file bytes"),
                 "size" => new external_value(PARAM_TEXT, "Formatted referenced file size"),
                 'error' => new external_value(PARAM_TEXT, 'Error message'),
