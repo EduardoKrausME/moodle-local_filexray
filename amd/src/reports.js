@@ -94,6 +94,8 @@ define(['core/ajax', 'core/notification', 'core/modal_delete_cancel', 'core/moda
                 }
             });
         });
+        // Enable report generation only after JavaScript has installed its click handler.
+        button.disabled = false;
     };
 
     var initReport = function(reportid) {
