@@ -203,7 +203,7 @@ final class report_manager {
         $failed = $DB->get_records('local_filexray_course', [
             'reportid' => $reportid,
             'status' => 'failed',
-        ], 'id ASC', 'id');
+        ], 'id ASC', 'id, courseid');
         foreach ($failed as $row) {
             $DB->delete_records('local_filexray_file', ['reportcourseid' => $row->id]);
             $contextcount = course_context_inventory::append($reportid, (int) $row->id,
