@@ -29,6 +29,8 @@ $context = context_system::instance();
 require_capability('local/filexray:view', $context);
 
 $PAGE->set_url(new moodle_url('/local/filexray/index.php'));
+
+\local_filexray\mcp_banner::dismiss_if_requested($PAGE->url);
 $PAGE->set_context($context);
 $PAGE->set_title(get_string('pluginname', 'local_filexray'));
 $PAGE->set_heading(get_string('pluginname', 'local_filexray'));
@@ -56,5 +58,9 @@ $data = [
 ];
 
 echo $OUTPUT->header();
+if (\local_filexray\mcp_banner::should_show()) {
+    echo \local_filexray\mcp_banner::render($OUTPUT, $PAGE->url);
+}
+
 echo $OUTPUT->render_from_template('local_filexray/index', $data);
 echo $OUTPUT->footer();
