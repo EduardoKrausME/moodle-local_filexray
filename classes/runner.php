@@ -26,7 +26,6 @@ namespace local_filexray;
 
 use core\lock\lock_config;
 use core\task\manager;
-use core_text;
 use local_filexray\task\process_course;
 use Throwable;
 
@@ -122,7 +121,7 @@ final class runner {
                 $DB->update_record('local_filexray_course', (object) [
                     'id' => $row->id, 'status' => 'failed',
                     'filecount' => $contextcount, 'timefinished' => time(),
-                    'errormessage' => core_text::substr($e->getMessage(), 0, 2000),
+                    'errormessage' => substr($e->getMessage(), 0, 2000),
                 ]);
                 debugging('File X-Ray inventory failed for course ' . $row->courseid . ': ' .
                     $e->getMessage(), DEBUG_DEVELOPER);
