@@ -6,7 +6,7 @@ File X-Ray audits which records in Moodle's `files` table are selected by each c
 
 The bilingual documentation site uses the same visual layout as [Moodle MCP documentation](https://eduardokrausme.github.io/moodle-local_mcp/), adapted for File X-Ray. Browse [Portuguese](docs/pt_br/index.html) or [English](docs/en/index.html) pages in this repository, or publish the `docs/` directory using GitHub Pages.
 
-The source includes a public overview, installation, native backup inspection, report processing, per-course comparison, file-area explanations, security limits and privacy information. It does not imply that files outside course inventories are safe to delete.
+The source includes a public overview, native backup inspection, report processing, per-course comparison, file-area explanations, security limits and privacy information. It does not imply that files outside course inventories are safe to delete.
 
 ## Workflow
 
