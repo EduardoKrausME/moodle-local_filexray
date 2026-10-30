@@ -68,6 +68,7 @@ $string['comparison'] = 'Compare with mdl_files';
 $string['comparison_note'] = 'Files not included in course inventories are not necessarily orphaned. Other Moodle contexts and unsupported backup plugins may still use them. No deletion is performed.';
 $string['completed'] = 'Completed';
 $string['component'] = 'Component';
+$string['contextid'] = 'Context ID';
 $string['course'] = 'Course';
 $string['courseallcomponents'] = 'All components';
 $string['coursechartbytes'] = 'Bytes by component';

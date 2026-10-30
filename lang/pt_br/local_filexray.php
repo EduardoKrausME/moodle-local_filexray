@@ -68,6 +68,7 @@ $string['comparison'] = 'Comparar com mdl_files';
 $string['comparison_note'] = 'Arquivos ausentes dos inventários dos cursos não são necessariamente órfãos. Outros contextos do Moodle e plugins sem suporte completo a backup podem utilizá-los. Nenhuma exclusão é realizada.';
 $string['completed'] = 'Concluído';
 $string['component'] = 'Componente';
+$string['contextid'] = 'ID do contexto';
 $string['course'] = 'Curso';
 $string['courseallcomponents'] = 'Todos os componentes';
 $string['coursechartbytes'] = 'Bytes por componente';
