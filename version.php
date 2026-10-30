@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026101900;
-$plugin->release = '1.1.2';
+$plugin->version = 2026102900;
+$plugin->release = '1.1.3';
 $plugin->component = 'local_filexray';
 $plugin->requires = 2024100700;
 $plugin->maturity = MATURITY_STABLE;
