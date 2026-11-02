@@ -2,6 +2,14 @@
 
 This changelog describes **only the two most recent published GitHub releases** of `local_filexray`. Each entry is grounded in the Git comparison between its release tag and the immediately preceding **published** release tag. Later commits on `master`, including builds and source maintenance after `1.1.2`, are excluded.
 
+## 1.1.3 - 2026-10-30
+
+- Translated the context ID heading in File X-Ray reports.
+- Replaced legacy `core_text` usage and normalized language strings, PHP headers and the MCP banner Mustache template.
+- Rebuilt the reports AMD asset and removed installation walkthroughs from the README.
+
+**Full comparison:** [1.1.2...1.1.3](https://github.com/EduardoKrausME/moodle-local_filexray/compare/1.1.2...1.1.3)
+
 ## [1.1.2] - 2026-10-19
 
 Published: 2026-10-19 14:50:50 UTC.
