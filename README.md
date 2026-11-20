@@ -26,15 +26,15 @@ In **Site administration → Plugins → Local plugins → File X-Ray**, enable 
 
 ## Architecture
 
-* `local_filexray_report` — snapshot metadata and status.
-* `local_filexray_course` — one course job per report, with timestamps/errors/counts.
-* `local_filexray_file` — file record ID, content hash and related metadata for a given course and report.
-* `classes/backup_inventory.php` — runs Moodle's general backup plan through the final annotation migration, but deliberately stops **before** `backup_final_files_structure_step` (`fileslist`), which would otherwise copy files.
-* `classes/course_context_inventory.php` — bulk-inserts all course and activity context file metadata on report creation; later appends new context files without duplicating existing report/course file IDs.
-* `classes/task/process_course.php` — one task per course, chaining the next job on cron.
-* `classes/report_manager.php` — creates the initial course/file snapshot in a database transaction and provides paginated live progress.
+* `local_filexray_report` - snapshot metadata and status.
+* `local_filexray_course` - one course job per report, with timestamps/errors/counts.
+* `local_filexray_file` - file record ID, content hash and related metadata for a given course and report.
+* `classes/backup_inventory.php` - runs Moodle's general backup plan through the final annotation migration, but deliberately stops **before** `backup_final_files_structure_step` (`fileslist`), which would otherwise copy files.
+* `classes/course_context_inventory.php` - bulk-inserts all course and activity context file metadata on report creation; later appends new context files without duplicating existing report/course file IDs.
+* `classes/task/process_course.php` - one task per course, chaining the next job on cron.
+* `classes/report_manager.php` - creates the initial course/file snapshot in a database transaction and provides paginated live progress.
 
-**Requirements** — Moodle 4.5 or later, PHP compatible with the Moodle instance, working Moodle cron, site management permissions.
+**Requirements** - Moodle 4.5 or later, PHP compatible with the Moodle instance, working Moodle cron, site management permissions.
 
 ## Security and limitations
 
